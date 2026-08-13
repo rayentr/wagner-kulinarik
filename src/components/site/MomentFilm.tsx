@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import Image from "next/image";
+import { DrawSVGPlugin } from "gsap/DrawSVGPlugin";
 import {
   gsap,
   useGSAP,
@@ -10,29 +11,33 @@ import {
   scrollToTarget,
 } from "@/lib/gsap";
 
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(DrawSVGPlugin);
+}
+
 const BEATS = [
   {
     n: "01",
-    label: "Anfrage",
-    line: "Der Rahmen entsteht.",
+    label: "Planen",
+    line: "Der Anlass nimmt Form an.",
     image: "/images/gallery-table.jpg",
   },
   {
     n: "02",
-    label: "Aufbau",
-    line: "Architektur aus Geschmack.",
+    label: "Einladen",
+    line: "Gäste per QR dabei.",
     image: "/images/gallery-dessert.jpg",
   },
   {
     n: "03",
-    label: "Peak",
-    line: "Der Tisch atmet.",
+    label: "Hosten",
+    line: "Die Nacht beginnt.",
     image: "/images/gallery-event.jpg",
   },
   {
     n: "04",
-    label: "Favor",
-    line: "Etwas bleibt.",
+    label: "Teilen",
+    line: "Momente bleiben.",
     image: "/images/celebration-cookies.jpg",
   },
 ];
@@ -153,7 +158,7 @@ export function MomentFilm() {
                   fill
                   sizes="100vw"
                   className="object-cover"
-                  priority={i === 0}
+                  priority={false}
                 />
               </div>
             </div>
@@ -209,7 +214,7 @@ export function MomentFilm() {
         </div>
 
         <p className="label absolute right-6 top-1/2 z-20 hidden -translate-y-1/2 rotate-90 text-ivory/40 md:block">
-          Der Moment · 01—04
+          Event · 01—04
         </p>
       </section>
 
@@ -228,25 +233,26 @@ export function MomentFilm() {
         </div>
 
         <div className="relative z-10 flex min-h-[85svh] flex-col justify-end px-6 py-16 md:px-12 md:py-24 lg:px-20">
-          <p className="label text-brass">Nach dem Film</p>
-          <h3 className="mt-4 max-w-[11ch] font-display text-5xl font-medium leading-[.92] tracking-[-.04em] text-ivory md:text-7xl">
-            Welcher Moment ist Ihrer?
+          <p className="label text-brass">Weiter</p>
+          <h3 className="mt-4 max-w-[12ch] font-display text-5xl font-medium leading-[.92] tracking-[-.04em] text-ivory md:text-7xl">
+            Welcher Anlass ist Ihrer?
           </h3>
           <p className="mt-5 max-w-[38ch] font-body text-lg text-ivory/70">
-            Wählen Sie ein Angebot — oder prüfen Sie direkt die Verfügbarkeit.
+            Anlässe entdecken — oder direkt Event planen und Reservierung
+            anfragen.
           </p>
 
           <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
             <a
-              href="#angebote"
+              href="#anlaesse"
               data-cursor="cta"
               onClick={(e) => {
                 e.preventDefault();
-                scrollToTarget("#angebote");
+                scrollToTarget("#anlaesse");
               }}
-              className="bg-accent px-7 py-3.5 font-sans text-sm font-medium text-paper transition-colors hover:bg-[#ca5138]"
+              className="bg-accent px-7 py-3.5 font-sans text-sm font-medium text-paper transition-colors hover:bg-berry-bright"
             >
-              Angebote entdecken
+              Anlässe entdecken
             </a>
             <a
               href="#anfrage"
@@ -257,7 +263,7 @@ export function MomentFilm() {
               }}
               className="group inline-flex items-center gap-2 border-b border-ivory/40 pb-1 font-sans text-sm font-medium text-ivory"
             >
-              Verfügbarkeit prüfen
+              Reservierung
               <span className="transition-transform duration-300 group-hover:translate-x-1">
                 →
               </span>
@@ -265,7 +271,7 @@ export function MomentFilm() {
           </div>
 
           <p className="mt-12 label text-ivory/45">
-            Berlin &amp; Umland · Antwort in 48h · ab Anfrage
+            Berlin &amp; Umland · App · DE / EN
           </p>
         </div>
       </section>

@@ -1,36 +1,40 @@
-@import url("https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap");
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------ *
- * Wagner Kulinarik — design tokens
+ * Wagner Kulinarik — materials
+ * Display: Newsreader · UI: Instrument Sans · labels: italic display
  * ------------------------------------------------------------------ */
 :root {
-  /* palette */
+  /* palette — same hexes, stricter roles */
   --paper: #fcfaf8;
   --ink: #231f20;
   --cream: #efe5d6;
   --brass: #c6a26d;
   --brass-soft: #ddc69e;
   --accent: #b8442c;
+  --berry-bright: #ca5138;
   --night: #171310;
   --night-soft: #211b17;
+  --muted: #6b6460;
+  --border: rgba(35, 31, 32, 0.12);
+  --white: #ffffff;
 
-  /* legacy aliases retained for dark cinematic sections */
+  /* legacy aliases for cinematic / dark sections */
   --cocoa: var(--night);
   --cocoa-900: #100d0b;
   --cocoa-800: var(--night-soft);
   --ivory: var(--paper);
   --ivory-soft: var(--cream);
   --berry: var(--accent);
-  --berry-bright: #ca5138;
 
   /* semantic */
   --background: var(--paper);
   --foreground: var(--ink);
 
   /* type */
-  --tracking-label: 0.16em;
+  --tracking-label: 0.01em;
   --tracking-tight: -0.02em;
+  --radius-surface: 2px;
 }
 
 @theme inline {
@@ -49,13 +53,20 @@
   --color-brass-soft: var(--brass-soft);
   --color-berry: var(--berry);
   --color-berry-bright: var(--berry-bright);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-white: var(--white);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
-  --font-display: var(--font-fraunces), Georgia, serif;
-  --font-sans: "Satoshi", ui-sans-serif, system-ui, sans-serif;
-  --font-body: var(--font-literata), Georgia, serif;
-  --font-condensed: var(--font-oswald), "Arial Narrow", ui-sans-serif, sans-serif;
+  --font-display: var(--font-newsreader), "Newsreader", Georgia, "Times New Roman",
+    serif;
+  --font-sans: var(--font-instrument), "Instrument Sans", ui-sans-serif,
+    system-ui, sans-serif;
+  --font-body: var(--font-instrument), "Instrument Sans", ui-sans-serif,
+    system-ui, sans-serif;
+  --font-condensed: var(--font-instrument), "Instrument Sans", ui-sans-serif,
+    system-ui, sans-serif;
 }
 
 /* ------------------------------------------------------------------ *
@@ -67,7 +78,6 @@
 }
 
 html {
-  /* ScrollToPlugin owns animated jumps; keep CSS smooth as progressive enhancement only */
   scroll-behavior: auto;
 }
 
@@ -80,8 +90,8 @@ html {
 body {
   background: var(--paper);
   color: var(--ink);
-  font-family: var(--font-body);
-  /* clip avoids the fixed/pin breakage that overflow-x:hidden causes on body */
+  font-family: var(--font-sans);
+  font-weight: 400;
   overflow-x: clip;
 }
 
@@ -168,6 +178,7 @@ body {
 
 /* SplitText line masks — keep overflow clipped for reveal */
 .hero-line,
+.hero-word,
 .manifesto-line {
   overflow: hidden;
   padding-bottom: 0.06em;
@@ -183,7 +194,6 @@ body {
  * Atmosphere utilities
  * ------------------------------------------------------------------ */
 
-/* film grain overlay */
 .grain::after {
   content: "";
   position: absolute;
@@ -194,7 +204,6 @@ body {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* the warm light pool of "The Last Light" */
 .light-pool {
   background: var(--night);
 }
@@ -220,24 +229,112 @@ body {
   );
 }
 
-/* text helpers */
+/* Section voice — italic display, not brass uppercase */
 .label {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: var(--tracking-label);
+  text-transform: none;
+  font-size: 0.9375rem;
+}
+
+/* Accent CTA — paper text on accent fill */
+.btn-accent {
+  background: var(--accent);
+  color: var(--paper);
   font-family: var(--font-sans);
   font-weight: 500;
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
-  font-size: 0.72rem;
+  transition: background-color 0.3s ease;
+}
+
+.btn-accent:hover {
+  background: var(--berry-bright);
+}
+
+/* Soft cream surface (app sheet / chip feel) */
+.surface-cream {
+  background: var(--cream);
+  border-radius: var(--radius-surface);
 }
 
 .text-balance {
   text-wrap: balance;
 }
 
-/* prevent FOUC on gsap-animated elements */
-.anim-hidden {
-  opacity: 0;
-  visibility: hidden;
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.sr-only:focus,
+.sr-only:focus-visible,
+.focus\:not-sr-only:focus {
+  position: fixed;
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* House → kitchen walk (View Transitions). Header stays; the room moves. */
+::view-transition-group(site-header) {
+  animation: none;
+  z-index: 100;
+}
+::view-transition-old(site-header) {
+  display: none;
+}
+::view-transition-new(site-header) {
+  animation: none;
+}
+
+::view-transition-old(.nav-forward) {
+  --walk: -48px;
+  animation: 420ms cubic-bezier(0.22, 0.61, 0.36, 1) both walk-x;
+}
+::view-transition-new(.nav-forward) {
+  --walk: 48px;
+  animation: 420ms cubic-bezier(0.22, 0.61, 0.36, 1) both walk-x;
+}
+::view-transition-old(.nav-back) {
+  --walk: 48px;
+  animation: 420ms cubic-bezier(0.22, 0.61, 0.36, 1) both walk-x;
+}
+::view-transition-new(.nav-back) {
+  --walk: -48px;
+  animation: 420ms cubic-bezier(0.22, 0.61, 0.36, 1) both walk-x;
+}
+
+@keyframes walk-x {
+  from {
+    transform: translateX(var(--walk));
+    clip-path: inset(0 8% 0 8%);
+  }
+  to {
+    transform: translateX(0);
+    clip-path: inset(0 0 0 0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .anim-hidden {
     opacity: 1;
@@ -247,5 +344,12 @@ body {
   .group:hover img,
   a:hover {
     transform: none !important;
+  }
+
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
   }
 }

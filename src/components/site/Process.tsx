@@ -1,344 +1,360 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, type MouseEvent } from "react";
 import Image from "next/image";
+import { Observer } from "gsap/Observer";
 import {
   gsap,
-  useGSAP,
   ScrollTrigger,
   prefersReducedMotion,
   scrollToTarget,
+  useGSAP,
 } from "@/lib/gsap";
+import { getLenis } from "@/lib/lenis-ref";
+import { Magnetic } from "./Magnetic";
+
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(Observer);
+}
 
 const STEPS = [
   {
     n: "01",
-    title: "Gespräch",
-    text: "Datum, Gästezahl und Ihre Vision — wir hören zu und beraten offen.",
-    image: "/images/gallery-table.jpg",
+    title: "Anlass",
+    text: "Welche Nacht ist das.",
+    image: "/images/wedding-desserts.jpg",
+    crop: "50% 30%",
   },
   {
     n: "02",
-    title: "Konzept",
-    text: "Menü- und Display-Plan, abgestimmt auf Anlass, Ort und Stil.",
-    image: "/images/wedding-desserts.jpg",
+    title: "Paket",
+    text: "Was auf den Tisch kommt.",
+    image: "/images/gallery-table.jpg",
+    crop: "50% 58%",
   },
   {
     n: "03",
-    title: "Probe & Freigabe",
-    text: "Verkostung oder Foto-Freigabe, bevor der große Tag kommt.",
+    title: "Details",
+    text: "Wann, wo, für wen — der Rahmen.",
     image: "/images/flavor-summer.jpg",
+    crop: "50% 35%",
   },
   {
     n: "04",
-    title: "Am Tag",
-    text: "Aufbau, Service im Zeitfenster und sauberer Abbau — Sie feiern.",
+    title: "Einladen",
+    text: "Ein Link. Die Gäste finden den Tisch.",
     image: "/images/gallery-event.jpg",
+    crop: "40% 50%",
   },
-];
+  {
+    n: "05",
+    title: "Momente",
+    text: "Wenn die Lichter aus sind, bleibt sie.",
+    image: "/images/celebration-cookies.jpg",
+    crop: "50% 45%",
+  },
+] as const;
 
-const MORPH_PATHS = [
-  "M18 50 C18 32 32 22 50 22 C68 22 82 32 82 50 C82 68 68 78 50 78 C32 78 18 68 18 50 Z M28 50 C28 38 38 30 50 30 C62 30 72 38 72 50 C72 62 62 70 50 70 C38 70 28 62 28 50 Z",
-  "M18 28 H82 V72 H18 Z M18 42 H82 M40 28 V72 M62 28 V72",
-  "M28 20 H72 V80 H28 Z M28 40 H72 M28 60 H72 M40 20 V80 M56 20 V80",
-  "M30 38 H70 V78 H30 Z M30 38 L50 24 L70 38 M50 24 V78",
-];
+const OPEN = "inset(0% 0% 0% 0%)";
+const CLOSED_DOWN = "inset(100% 0% 0% 0%)";
+const CLOSED_UP = "inset(0% 0% 100% 0%)";
 
-const PIN_ID = "process-pin";
-const MORPH_LABELS = ["Teller", "Plan", "Buffet", "Favor"];
+function ask(e: MouseEvent<HTMLAnchorElement>) {
+  e.preventDefault();
+  scrollToTarget("#anfrage");
+}
 
 /**
- * Pinned Ablauf — trigger === pin (the section itself).
- * Step visuals driven by GSAP/DOM on scrub; React state only for the step list UI.
+ * The pass — five stations. Desktop/touch: the page holds until the course is served.
+ * Wipes, never a crossfade. Reduced motion: a stacked menu, not a settings list.
  */
 export function Process() {
   const root = useRef<HTMLElement>(null);
-  const lineRef = useRef<SVGPathElement>(null);
-  const morphRef = useRef<SVGPathElement>(null);
-  const pinSt = useRef<ScrollTrigger | null>(null);
-  const activeRef = useRef(0);
-  const clickLock = useRef(false);
-  const [active, setActive] = useState(0);
+  const pin = useRef<HTMLDivElement>(null);
 
   useGSAP(
     () => {
-      if (prefersReducedMotion() || !root.current) return;
+      const pinEl = pin.current;
+      const rootEl = root.current;
+      if (!pinEl || !rootEl) return;
 
-      const el = root.current;
-      const layers = gsap.utils.toArray<HTMLElement>(
-        el.querySelectorAll("[data-process-layer]"),
+      const stations = gsap.utils.toArray<HTMLElement>(
+        "[data-station]",
+        pinEl,
       );
-      const line = lineRef.current;
-      const morph = morphRef.current;
+      const ticks = gsap.utils.toArray<HTMLElement>("[data-tick]", pinEl);
+      const n = stations.length;
+      if (!n) return;
 
-      gsap.set(layers, { autoAlpha: 0 });
-      if (layers[0]) gsap.set(layers[0], { autoAlpha: 1 });
-      if (line) gsap.set(line, { drawSVG: "0%" });
+      const mark = (index: number) => {
+        ticks.forEach((t, i) => t.setAttribute("data-on", i === index ? "1" : "0"));
+        pinEl.setAttribute("aria-label", `${STEPS[index].title}, ${index + 1} von ${n}`);
+      };
 
-      const last = STEPS.length - 1;
-
-      const showStep = (i: number, immediate = false) => {
-        if (i === activeRef.current && !immediate) return;
-        activeRef.current = i;
-
-        layers.forEach((layer, idx) => {
-          gsap.to(layer, {
-            autoAlpha: idx === i ? 1 : 0,
-            duration: immediate ? 0 : 0.35,
-            ease: "lc.soft",
-            overwrite: "auto",
+      const show = (index: number) => {
+        stations.forEach((el, i) => {
+          gsap.set(el, {
+            zIndex: i === index ? 1 : 0,
+            clipPath: i === index ? OPEN : CLOSED_DOWN,
           });
+          gsap.set(el.querySelector("[data-station-copy]"), { yPercent: 0 });
+          gsap.set(el.querySelector("[data-station-media]"), { yPercent: 0 });
+        });
+        mark(index);
+      };
+
+      if (prefersReducedMotion()) {
+        stations.forEach((el) => {
+          gsap.set(el, { clearProps: "clipPath,zIndex" });
+        });
+        return;
+      }
+
+      let current = 0;
+      let animating = false;
+      show(0);
+
+      const go = (index: number, direction: number) => {
+        if (animating || index === current || index < 0 || index >= n) return;
+        animating = true;
+        const incoming = stations[index];
+        const outgoing = stations[current];
+        const from = direction > 0 ? CLOSED_DOWN : CLOSED_UP;
+
+        gsap.set(incoming, { zIndex: 2, clipPath: from });
+        gsap.set(outgoing, { zIndex: 1 });
+
+        const copy = incoming.querySelector("[data-station-copy]");
+        const media = incoming.querySelector("[data-station-media]");
+
+        const tl = gsap.timeline({
+          defaults: { ease: "lc.soft" },
+          onComplete: () => {
+            gsap.set(outgoing, { zIndex: 0, clipPath: CLOSED_DOWN });
+            gsap.set(incoming, { zIndex: 1, clipPath: OPEN });
+            current = index;
+            animating = false;
+            mark(index);
+          },
         });
 
-        if (morph) {
-          gsap.to(morph, {
-            morphSVG: { shape: MORPH_PATHS[i], type: "rotational" },
-            duration: immediate ? 0 : 0.45,
-            ease: "lc.soft",
-            overwrite: "auto",
-          });
+        tl.to(incoming, { clipPath: OPEN, duration: 0.82 }, 0);
+        if (media) {
+          tl.fromTo(
+            media,
+            { yPercent: direction > 0 ? 10 : -10 },
+            { yPercent: 0, duration: 0.82, ease: "none" },
+            0,
+          );
         }
+        if (copy) {
+          tl.fromTo(
+            copy,
+            { yPercent: 26 },
+            { yPercent: 0, duration: 0.62 },
+            0.18,
+          );
+        }
+      };
 
-        const num = el.querySelector("[data-step-n]");
-        const title = el.querySelector("[data-step-title]");
-        const text = el.querySelector("[data-step-text]");
-        const morphLabel = el.querySelector("[data-morph-label]");
-        if (num) num.textContent = STEPS[i].n;
-        if (title) title.textContent = STEPS[i].title;
-        if (text) text.textContent = STEPS[i].text;
-        if (morphLabel) morphLabel.textContent = MORPH_LABELS[i];
+      const observer = Observer.create({
+        target: window,
+        type: "wheel,touch",
+        wheelSpeed: -1,
+        tolerance: 40,
+        preventDefault: true,
+        onUp: () => {
+          if (animating) return;
+          if (current >= n - 1) {
+            release(1);
+            return;
+          }
+          go(current + 1, 1);
+        },
+        onDown: () => {
+          if (animating) return;
+          if (current <= 0) {
+            release(-1);
+            return;
+          }
+          go(current - 1, -1);
+        },
+      });
+      observer.disable();
 
-        // List UI only — no layer styles in React
-        setActive(i);
+      let gated = false;
+
+      const hold = () => {
+        getLenis()?.stop();
+        observer.enable();
+      };
+
+      const jump = (y: number) => {
+        gated = true;
+        const lenis = getLenis();
+        if (lenis) lenis.scrollTo(y, { immediate: true });
+        else window.scrollTo(0, y);
+        requestAnimationFrame(() => {
+          gated = false;
+        });
+      };
+
+      const release = (direction: number) => {
+        observer.disable();
+        const lenis = getLenis();
+        lenis?.start();
+        const pass = ScrollTrigger.getById("process-pass");
+        if (!pass) return;
+        jump(direction > 0 ? pass.end + 2 : Math.max(0, pass.start - 2));
       };
 
       const st = ScrollTrigger.create({
-        id: PIN_ID,
-        trigger: el,
+        trigger: pinEl,
         pin: true,
         start: "top top",
-        end: `+=${STEPS.length * 85}%`,
-        scrub: 0.35,
+        end: "+=140%",
         anticipatePin: 1,
-        invalidateOnRefresh: true,
-        onUpdate: (self) => {
-          if (clickLock.current) return;
-          const i = Math.min(last, Math.round(self.progress * last));
-          showStep(i);
-          if (line) gsap.set(line, { drawSVG: `${self.progress * 100}%` });
+        id: "process-pass",
+        onEnter: () => {
+          if (gated || observer.isEnabled) return;
+          show(0);
+          current = 0;
+          hold();
+        },
+        onEnterBack: () => {
+          if (gated || observer.isEnabled) return;
+          show(n - 1);
+          current = n - 1;
+          hold();
+        },
+        onLeave: () => {
+          if (gated || !observer.isEnabled) return;
+          observer.disable();
+          getLenis()?.start();
+        },
+        onLeaveBack: () => {
+          if (gated || !observer.isEnabled) return;
+          observer.disable();
+          getLenis()?.start();
         },
       });
 
-      pinSt.current = st;
-      showStep(0, true);
-
-      // Expose for click handler without stale closures
-      (el as HTMLElement & { __showStep?: typeof showStep }).__showStep =
-        showStep;
+      const onKey = (e: KeyboardEvent) => {
+        if (!observer.isEnabled || animating) return;
+        const tag = (e.target as HTMLElement | null)?.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+        if (e.key === "Escape") {
+          e.preventDefault();
+          release(1);
+          return;
+        }
+        if (e.key === "ArrowDown" || e.key === "PageDown") {
+          e.preventDefault();
+          if (current >= n - 1) release(1);
+          else go(current + 1, 1);
+        }
+        if (e.key === "ArrowUp" || e.key === "PageUp") {
+          e.preventDefault();
+          if (current <= 0) release(-1);
+          else go(current - 1, -1);
+        }
+      };
+      window.addEventListener("keydown", onKey);
 
       return () => {
+        window.removeEventListener("keydown", onKey);
+        observer.kill();
         st.kill();
-        pinSt.current = null;
-        gsap.set(layers, { clearProps: "opacity,visibility" });
+        getLenis()?.start();
       };
     },
     { scope: root },
   );
 
-  const selectStep = (i: number) => {
-    clickLock.current = true;
-    const el = root.current as
-      | (HTMLElement & { __showStep?: (i: number) => void })
-      | null;
-    el?.__showStep?.(i);
-
-    const st = pinSt.current ?? ScrollTrigger.getById(PIN_ID);
-    if (st && !prefersReducedMotion()) {
-      const last = STEPS.length - 1;
-      const progress = last === 0 ? 0 : i / last;
-      const y = st.start + (st.end - st.start) * progress;
-      gsap.to(window, {
-        duration: 0.65,
-        ease: "lc.soft",
-        scrollTo: { y, autoKill: false },
-        overwrite: "auto",
-      });
-    }
-
-    window.setTimeout(() => {
-      clickLock.current = false;
-    }, 700);
-  };
-
   return (
-    <section
-      id="ablauf"
-      ref={root}
-      className="flex min-h-[100svh] flex-col justify-center bg-paper px-6 py-20 text-ink md:px-12 md:py-24"
-    >
-      <div className="mx-auto w-full max-w-[1500px]">
-        <div className="grid gap-8 md:grid-cols-[.55fr_1.45fr]">
-          <div>
-            <p className="label text-accent">05 / Ablauf</p>
-            <p className="mt-5 font-sans text-sm text-ink/45">
-              Ideal: 4–6 Wochen
-              <br />
-              vor Ihrem Termin.
-            </p>
-          </div>
-          <h2 className="max-w-[13ch] font-display text-5xl font-medium leading-[.95] tracking-[-.04em] md:text-7xl">
-            Von der Anfrage bis zum letzten Gang.
-          </h2>
-        </div>
-
-        <div className="mt-12 grid gap-8 lg:grid-cols-[1.15fr_.85fr] lg:gap-12">
-          <div
-            data-process-media
-            data-cursor="media"
-            className="relative aspect-[4/5] overflow-hidden bg-night md:aspect-[16/11] lg:aspect-auto lg:min-h-[min(68svh,34rem)]"
+    <section id="ablauf" ref={root} className="bg-paper text-ink">
+      <h2 className="sr-only">Der Weg — fünf Stationen bis zur Nacht</h2>
+      <div
+        ref={pin}
+        data-cursor="media"
+        className="relative motion-safe:h-[100svh] motion-safe:overflow-hidden"
+        role="region"
+        aria-roledescription="Karussell"
+      >
+        {STEPS.map((s, i) => (
+          <article
+            key={s.n}
+            data-station
+            className={`relative motion-reduce:border-b motion-reduce:border-ink/10 motion-safe:absolute motion-safe:inset-0 ${
+              i === 0 ? "motion-safe:z-[1]" : "motion-safe:z-0 motion-safe:[clip-path:inset(100%_0_0_0)]"
+            }`}
           >
-            {STEPS.map((s, i) => (
-              <div
-                key={s.n}
-                data-process-layer
-                className="absolute inset-0"
-              >
-                <Image
-                  src={s.image}
-                  alt=""
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 55vw"
-                  className="object-cover"
-                  priority={i === 0}
-                />
-              </div>
-            ))}
-            <div className="pointer-events-none absolute inset-0 z-20 bg-gradient-to-t from-night/75 via-transparent to-transparent" />
-
-            <div className="absolute right-5 top-5 z-20 flex flex-col items-end gap-2">
-              <svg
-                viewBox="0 0 100 100"
-                className="h-14 w-14 text-brass md:h-16 md:w-16"
-                aria-hidden
-              >
-                <path
-                  ref={morphRef}
-                  d={MORPH_PATHS[0]}
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.2"
-                  strokeLinejoin="round"
-                  strokeLinecap="round"
-                />
-              </svg>
-              <span data-morph-label className="label text-ivory/50">
-                {MORPH_LABELS[0]}
-              </span>
-            </div>
-
-            <span
-              data-step-n
-              className="absolute left-5 top-5 z-20 font-display text-3xl font-medium leading-none text-paper/40 md:left-6 md:top-6 md:text-4xl"
+            <div
+              data-station-media
+              className="relative aspect-[4/5] overflow-hidden bg-night-soft motion-reduce:max-h-[52svh] motion-safe:absolute motion-safe:inset-0 motion-safe:aspect-auto motion-safe:max-h-none"
             >
-              {STEPS[0].n}
-            </span>
+              <Image
+                src={s.image}
+                alt=""
+                fill
+                sizes="100vw"
+                className="object-cover"
+                style={{
+                  objectPosition: s.crop,
+                  transform: "scale(1.4)",
+                }}
+                priority={i === 0}
+              />
+            </div>
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 hidden h-64 bg-gradient-to-t from-night/80 to-transparent motion-safe:block" />
 
-            <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-20 p-6 md:p-8">
-              <h3
-                data-step-title
-                className="font-display text-3xl font-medium text-ivory md:text-4xl"
-              >
-                {STEPS[0].title}
-              </h3>
-              <p
-                data-step-text
-                className="mt-3 max-w-[40ch] font-body text-base leading-relaxed text-ivory/75"
-              >
-                {STEPS[0].text}
+            <div className="relative z-10 px-6 py-8 md:px-12 motion-safe:absolute motion-safe:inset-x-0 motion-safe:bottom-0 motion-safe:px-6 motion-safe:pb-16 motion-safe:pt-0 md:motion-safe:px-16">
+              <p className="label mb-6 text-ink/40 motion-safe:text-ivory/45">
+                Der Weg
               </p>
-            </div>
-          </div>
-
-          <div className="flex flex-col justify-center">
-            <div className="relative pl-2">
-              <svg
-                className="pointer-events-none absolute left-[1.35rem] top-3 h-[calc(100%-1.5rem)] w-8 md:left-[1.5rem]"
-                viewBox="0 0 8 400"
-                preserveAspectRatio="none"
-                aria-hidden
-              >
-                <path
-                  d="M4 0 V400"
-                  stroke="rgba(35,31,32,0.15)"
-                  strokeWidth="1"
-                  fill="none"
-                />
-                <path
-                  ref={lineRef}
-                  d="M4 0 V400"
-                  stroke="var(--accent)"
-                  strokeWidth="2"
-                  fill="none"
-                />
-              </svg>
-
-              <ol className="relative flex flex-col gap-2">
-                {STEPS.map((s, i) => {
-                  const on = i === active;
-                  return (
-                    <li key={s.n}>
-                      <button
-                        type="button"
-                        data-cursor="link"
-                        onClick={() => selectStep(i)}
-                        className={`group flex w-full items-start gap-5 px-2 py-4 text-left transition-colors ${
-                          on ? "opacity-100" : "opacity-45 hover:opacity-80"
-                        }`}
+              <div className="overflow-hidden">
+                <div data-station-copy>
+                  <p className="font-display text-2xl font-medium text-ink/35 motion-safe:text-ivory/40 md:text-3xl">
+                    {s.n}
+                  </p>
+                  <h3 className="mt-3 max-w-[10ch] font-display text-[clamp(2.6rem,6vw,5.2rem)] font-medium leading-[.9] tracking-[-.04em] motion-safe:text-ivory">
+                    {s.title}
+                  </h3>
+                  <p className="mt-4 max-w-[28ch] font-sans text-sm leading-relaxed text-ink/60 motion-safe:text-ivory/75">
+                    {s.text}
+                  </p>
+                  {i === STEPS.length - 1 && (
+                    <Magnetic strength={18}>
+                      <a
+                        href="#anfrage"
+                        data-cursor="cta"
+                        onClick={ask}
+                        className="pointer-events-auto mt-7 inline-block font-sans text-sm text-accent"
                       >
-                        <span
-                          className={`relative z-10 mt-0.5 flex h-10 w-10 flex-none items-center justify-center font-sans text-xs font-medium ring-1 transition-colors ${
-                            on
-                              ? "bg-accent text-paper ring-accent"
-                              : "bg-paper text-ink ring-ink/25"
-                          }`}
-                        >
-                          {s.n}
-                        </span>
-                        <span>
-                          <span className="block font-display text-2xl font-medium leading-none">
-                            {s.title}
-                          </span>
-                          <span
-                            className={`mt-2 block max-w-[32ch] font-body text-sm leading-relaxed transition-all duration-300 ${
-                              on
-                                ? "max-h-24 opacity-70"
-                                : "max-h-0 overflow-hidden opacity-0"
-                            }`}
-                          >
-                            {s.text}
-                          </span>
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ol>
+                        Den Abend anfragen →
+                      </a>
+                    </Magnetic>
+                  )}
+                </div>
+              </div>
             </div>
+          </article>
+        ))}
 
-            <a
-              href="#anfrage"
-              data-cursor="cta"
-              onClick={(e) => {
-                e.preventDefault();
-                scrollToTarget("#anfrage");
-              }}
-              className="mt-10 inline-flex items-center gap-2 self-start border-b border-accent pb-1 font-sans text-sm font-medium text-ink"
-            >
-              Mit dem Gespräch starten
-              <span>→</span>
-            </a>
-          </div>
-        </div>
+        <ol
+          className="pointer-events-none absolute right-6 top-1/2 z-20 hidden -translate-y-1/2 flex-col items-center gap-3 motion-safe:flex md:right-10"
+          aria-hidden
+        >
+          {STEPS.map((s, i) => (
+            <li key={s.n}>
+              <span
+                data-tick
+                data-on={i === 0 ? "1" : "0"}
+                className="block h-7 w-px bg-ivory/25 data-[on=1]:bg-ivory"
+              />
+            </li>
+          ))}
+        </ol>
       </div>
     </section>
   );

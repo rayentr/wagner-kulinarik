@@ -11,12 +11,12 @@ type RevealProps = {
   delay?: number;
   /** stagger direct children instead of the element itself */
   stagger?: boolean;
-  y?: number;
 };
 
 /**
- * Quiet-luxury entrance: soft fade + short rise, once, on scroll.
- * Completes immediately if already past (pin refresh safe).
+ * Type-only entrance: clipped rise. Never opacity — wrapping photos
+ * in fade-in is what bleached images white over paper.
+ * Do not wrap <Image> / video with this component.
  */
 export function Reveal({
   children,
@@ -24,7 +24,6 @@ export function Reveal({
   className,
   delay = 0,
   stagger = false,
-  y = 32,
 }: RevealProps) {
   const Tag = (as ?? "div") as ElementType;
   const ref = useRef<HTMLElement>(null);
@@ -34,19 +33,18 @@ export function Reveal({
       const el = ref.current;
       if (!el) return;
 
+      const targets = stagger ? el.children : el;
+
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-        gsap.set(stagger ? el.children : el, { opacity: 1, y: 0 });
+        gsap.set(targets, { yPercent: 0 });
         return;
       }
 
-      const targets = stagger ? el.children : el;
-
       const tween = gsap.fromTo(
         targets,
-        { opacity: 0, y },
+        { yPercent: 24 },
         {
-          opacity: 1,
-          y: 0,
+          yPercent: 0,
           duration: 0.9,
           delay,
           ease: "lc.soft",
@@ -56,7 +54,6 @@ export function Reveal({
             trigger: el,
             start: "top 88%",
             once: true,
-            // After pin spacers remount, finish if we already scrolled past
             onRefresh(self) {
               if (self.progress === 1 || self.isActive) {
                 self.animation?.progress(1);
@@ -69,14 +66,14 @@ export function Reveal({
       return () => {
         tween.scrollTrigger?.kill();
         tween.kill();
-        gsap.set(targets, { clearProps: "opacity,transform,visibility" });
+        gsap.set(targets, { clearProps: "transform" });
       };
     },
     { scope: ref },
   );
 
   return (
-    <Tag ref={ref} className={className}>
+    <Tag ref={ref} className={`overflow-hidden ${className ?? ""}`.trim()}>
       {children}
     </Tag>
   );

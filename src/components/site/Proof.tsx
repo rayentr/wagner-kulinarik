@@ -9,43 +9,42 @@ import {
 } from "react";
 import Image from "next/image";
 import {
-  Draggable,
   gsap,
   prefersReducedMotion,
   useGSAP,
 } from "@/lib/gsap";
-import { Reveal } from "./Reveal";
+import { loadDraggable } from "@/lib/gsap-plugins";
 
 const SHOTS = [
   {
     image: "/images/gallery-event.jpg",
     alt: "Festlich gedeckter Eventtisch mit Kerzen und Gang-Service",
-    place: "Event, Berlin",
+    place: "Berlin, spät.",
   },
   {
     image: "/images/gallery-dessert.jpg",
-    alt: "Feine Nachspeisen auf einer silbernen Etagere",
-    place: "Hochzeit, Potsdam",
+    alt: "Fein angerichtete Speisen auf einer Etagere",
+    place: "Potsdam.",
   },
   {
     image: "/images/celebration-cookies.jpg",
-    alt: "Inszenierte Gang-Präsentation für eine private Feier",
-    place: "Geburtstag, Berlin",
+    alt: "Gang-Präsentation für eine private Feier",
+    place: "Zu laut.",
   },
   {
     image: "/images/gallery-table.jpg",
-    alt: "Kleine Gastgeschenke am gedeckten Tisch",
-    place: "Favor, Brandenburg",
+    alt: "Gedeckter Tisch mit Details",
+    place: "Der Tisch.",
   },
   {
     image: "/images/wedding-desserts.jpg",
-    alt: "Hochzeitstisch mit Desserts und Blüten",
-    place: "Hochzeit, Brandenburg",
+    alt: "Hochzeitstisch mit Blüten und Speisen",
+    place: "Der Schnitt.",
   },
   {
     image: "/images/flavor-signature.jpg",
-    alt: "House Signature Gang im Detail",
-    place: "Signature, Atelier",
+    alt: "Signature-Gang im Detail",
+    place: "Noch ein Glas.",
   },
 ];
 
@@ -58,12 +57,15 @@ export function Proof() {
   const reel = useRef<HTMLDivElement>(null);
   const track = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState<number | null>(null);
-  const dragRef = useRef<Draggable[] | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const dragRef = useRef<any[] | null>(null);
 
   useGSAP(
     () => {
       const el = track.current;
       if (!el || prefersReducedMotion()) return;
+
+      let dead = false;
 
       const syncBounds = () => {
         const drag = dragRef.current?.[0];
@@ -72,24 +74,30 @@ export function Proof() {
         drag.applyBounds({ minX: maxX, maxX: 0 });
       };
 
-      dragRef.current = Draggable.create(el, {
-        type: "x",
-        inertia: true,
-        edgeResistance: 0.82,
-        dragResistance: 0.12,
-        throwResistance: 2200,
-        allowContextMenu: true,
-        onPress() {
-          (this as Draggable & { _moved?: boolean })._moved = false;
-        },
-        onDrag() {
-          (this as Draggable & { _moved?: boolean })._moved = true;
-        },
+      void loadDraggable().then((Draggable) => {
+        if (dead || !track.current) return;
+        dragRef.current = Draggable.create(el, {
+          type: "x",
+          inertia: true,
+          edgeResistance: 0.82,
+          dragResistance: 0.12,
+          throwResistance: 2200,
+          allowContextMenu: true,
+          onPress() {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (this as any)._moved = false;
+          },
+          onDrag() {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (this as any)._moved = true;
+          },
+        });
+        syncBounds();
       });
 
-      syncBounds();
       window.addEventListener("resize", syncBounds);
       return () => {
+        dead = true;
         window.removeEventListener("resize", syncBounds);
         dragRef.current?.forEach((d) => d.kill());
         dragRef.current = null;
@@ -152,9 +160,7 @@ export function Proof() {
   };
 
   const onReelClick = (e: MouseEvent<HTMLDivElement>) => {
-    const drag = dragRef.current?.[0] as
-      | (Draggable & { _moved?: boolean })
-      | undefined;
+    const drag = dragRef.current?.[0] as { _moved?: boolean } | undefined;
     if (drag?._moved) return;
 
     const thumb = (e.target as HTMLElement).closest(
@@ -176,25 +182,15 @@ export function Proof() {
 
   return (
     <section
-      id="nachweis"
+      id="galerie"
       ref={root}
-      className="bg-cream px-6 py-24 text-ink md:px-12 md:py-36"
+      className="bg-paper pb-8 pt-6 text-ink"
     >
-      <div className="mx-auto max-w-[1500px]">
-        <Reveal>
-          <p className="label text-accent">06 / Gelebte Momente</p>
-          <div className="mt-6 flex items-end justify-between gap-8">
-            <h2 className="max-w-[10ch] font-display text-5xl font-medium leading-[.92] tracking-[-.04em] md:text-8xl">
-              Echte Feiern, echte Tische.
-            </h2>
-            <span className="hidden font-display text-8xl italic text-brass/45 md:block">
-              proof.
-            </span>
-          </div>
-          <p className="mt-4 label text-ink/40">
-            Ziehen · klicken links / rechts · tippen zum Öffnen
-          </p>
-        </Reveal>
+      <div className="mx-auto max-w-[1500px] px-6 md:px-12">
+        <p className="label text-ink/45">Film</p>
+        <h2 className="mt-3 max-w-[12ch] font-display text-[clamp(2.2rem,4.5vw,4rem)] font-medium leading-[.92] tracking-[-.04em]">
+          Nächte, die man teilt.
+        </h2>
       </div>
 
       <div
@@ -203,48 +199,44 @@ export function Proof() {
         onPointerMove={onReelMove}
         onPointerLeave={onReelLeave}
         onClick={onReelClick}
-        className="mt-14 cursor-grab overflow-hidden active:cursor-grabbing"
+        className="mt-10 cursor-grab overflow-hidden bg-night py-6 active:cursor-grabbing"
       >
         <div
           ref={track}
-          className="flex w-max gap-4 px-6 will-change-transform md:gap-5 md:px-12"
+          className="flex w-max items-center gap-3 px-6 will-change-transform md:gap-4 md:px-12"
         >
           {SHOTS.map((s, i) => (
             <figure
               key={s.image}
               data-proof-thumb
               data-index={i}
-              className="relative h-[52vw] w-[72vw] flex-none overflow-hidden bg-night sm:h-[42vw] sm:w-[48vw] md:h-[22rem] md:w-[28rem] lg:h-[26rem] lg:w-[34rem]"
+              className="relative h-[42vw] w-[58vw] flex-none overflow-hidden bg-night-soft sm:h-[32vw] sm:w-[42vw] md:h-[18rem] md:w-[24rem] lg:h-[20rem] lg:w-[28rem]"
+              style={{
+                boxShadow: "inset 10px 0 0 #171310, inset -10px 0 0 #171310",
+              }}
             >
               <Image
                 src={s.image}
                 alt={s.alt}
                 fill
-                sizes="(max-width: 768px) 72vw, 34rem"
+                sizes="(max-width: 768px) 58vw, 28rem"
                 className="object-cover"
                 draggable={false}
               />
-              <figcaption className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-night/70 to-transparent p-5">
-                <span className="label text-ivory/70">{s.place}</span>
+              <figcaption className="absolute bottom-3 left-4 font-display text-sm italic text-ivory">
+                {s.place}
               </figcaption>
             </figure>
           ))}
         </div>
       </div>
 
-      <div className="mx-auto max-w-[1500px]">
-        <Reveal delay={0.1}>
-          <blockquote className="mx-auto mt-20 max-w-3xl text-center">
-            <p className="font-display text-3xl font-medium leading-snug text-ink text-balance md:text-5xl">
-              „Der Tisch war der Moment, über den alle Gäste noch Wochen
-              später gesprochen haben.“
-            </p>
-            <footer className="mt-6 label text-ink/45">
-              — Hochzeit, Brandenburg
-            </footer>
-          </blockquote>
-        </Reveal>
-      </div>
+      <blockquote className="mx-auto mt-12 max-w-[28rem] px-6 md:px-12">
+        <p className="font-display text-2xl font-medium leading-snug text-ink md:text-3xl">
+          „Der Tisch war der Moment, über den alle noch Wochen später gesprochen haben.“
+        </p>
+        <footer className="mt-4 label text-ink/40">— Brandenburg</footer>
+      </blockquote>
 
       {open !== null && (
         <div
@@ -273,7 +265,6 @@ export function Proof() {
               fill
               sizes="(max-width: 768px) 90vw, 48rem"
               className="object-cover"
-              priority
             />
             <p className="absolute bottom-5 left-5 label text-ivory">
               {SHOTS[open].place}

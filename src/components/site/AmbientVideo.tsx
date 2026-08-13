@@ -13,6 +13,13 @@ type AmbientVideoProps = {
    * Reduced motion → paused video on first frame instead.
    */
   videoOnly?: boolean;
+  /**
+   * Only attach src / play when near viewport.
+   * Default true for non-hero; hero should pass lazy={false}.
+   */
+  lazy?: boolean;
+  /** Browser preload hint. Prefer "none" below the fold. */
+  preload?: "none" | "metadata" | "auto";
 };
 
 function prefersReducedMotion() {
@@ -22,6 +29,7 @@ function prefersReducedMotion() {
 
 /**
  * Muted ambient loop. Use videoOnly on the hero so a still never appears.
+ * Below-fold: poster + lazy load with preload="none".
  */
 export function AmbientVideo({
   src,
@@ -29,16 +37,42 @@ export function AmbientVideo({
   className = "",
   position = "center",
   videoOnly = false,
+  lazy = !videoOnly,
+  preload = videoOnly ? "metadata" : "none",
 }: AmbientVideoProps) {
-  const ref = useRef<HTMLVideoElement>(null);
-  const [useVideo, setUseVideo] = useState(() => videoOnly || !prefersReducedMotion());
+  const rootRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [reduceMotion] = useState(() => prefersReducedMotion());
+  const [inView, setInView] = useState(!lazy);
+  const [useVideo, setUseVideo] = useState(
+    () => videoOnly || !prefersReducedMotion(),
+  );
 
   useEffect(() => {
+    if (!lazy || inView) return;
+    const el = rootRef.current;
+    if (!el) return;
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setInView(true);
+          io.disconnect();
+        }
+      },
+      { rootMargin: "200px 0px", threshold: 0.01 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [lazy, inView]);
+
+  useEffect(() => {
+    if (!inView) return;
+
     if (videoOnly) {
-      setUseVideo(true);
-      const v = ref.current;
+      const v = videoRef.current;
       if (!v) return;
-      if (prefersReducedMotion()) {
+      if (reduceMotion) {
         v.pause();
         try {
           v.currentTime = 0;
@@ -54,36 +88,44 @@ export function AmbientVideo({
     }
 
     if (!useVideo) return;
-    const v = ref.current;
+    const v = videoRef.current;
     if (!v) return;
     v.play().catch(() => setUseVideo(false));
-  }, [src, useVideo, videoOnly]);
+  }, [src, useVideo, videoOnly, inView, reduceMotion]);
+
+  /* Poster stays under the video so the well never flashes empty/white. */
+  const showPoster = Boolean(poster) && !videoOnly;
+  const showVideo = inView && (useVideo || videoOnly);
 
   return (
-    <div className={`absolute inset-0 overflow-hidden ${className}`}>
-      {useVideo || videoOnly ? (
-        <video
-          ref={ref}
-          className="absolute inset-0 h-full w-full object-cover"
-          style={{ objectPosition: position }}
-          src={src}
-          muted
-          loop
-          playsInline
-          autoPlay
-          preload="auto"
-          aria-hidden
-          onError={videoOnly ? undefined : () => setUseVideo(false)}
-        />
-      ) : poster ? (
+    <div ref={rootRef} className={`absolute inset-0 overflow-hidden ${className}`}>
+      {showPoster && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={poster}
           alt=""
           className="absolute inset-0 h-full w-full object-cover"
           style={{ objectPosition: position }}
+          loading="lazy"
+          decoding="async"
         />
-      ) : null}
+      )}
+      {showVideo && (
+        <video
+          ref={videoRef}
+          className="absolute inset-0 h-full w-full object-cover"
+          style={{ objectPosition: position }}
+          src={src}
+          poster={videoOnly ? undefined : poster}
+          muted
+          loop
+          playsInline
+          autoPlay={!reduceMotion}
+          preload={preload}
+          aria-hidden
+          onError={videoOnly ? undefined : () => setUseVideo(false)}
+        />
+      )}
     </div>
   );
 }

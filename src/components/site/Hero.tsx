@@ -1,17 +1,22 @@
 "use client";
 
-import { useRef, type MouseEvent } from "react";
+import { useEffect, useRef, type MouseEvent } from "react";
+import { SplitText } from "gsap/SplitText";
 import {
   gsap,
-  SplitText,
   useGSAP,
   prefersReducedMotion,
   scrollToTarget,
 } from "@/lib/gsap";
+import { useLocale, useT } from "@/lib/locale";
+import { isServed, onServed } from "@/lib/amuse";
 import { AmbientVideo } from "./AmbientVideo";
 import { Magnetic } from "./Magnetic";
+import { HeroGrain } from "./HeroGrain";
 
-const WORDS = ["MOMENT", "MENÜ", "MEMORY"];
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(SplitText);
+}
 
 function go(e: MouseEvent<HTMLAnchorElement>, href: string) {
   e.preventDefault();
@@ -19,17 +24,23 @@ function go(e: MouseEvent<HTMLAnchorElement>, href: string) {
 }
 
 export function Hero() {
+  const t = useT();
+  const { locale } = useLocale();
   const root = useRef<HTMLElement>(null);
   const wordRef = useRef<HTMLSpanElement>(null);
   const brandRef = useRef<HTMLHeadingElement>(null);
+  const words = t.hero.words;
 
   useGSAP(
     () => {
       const reduce = prefersReducedMotion();
+      const WORDS = [...words];
 
       if (reduce) {
-        gsap.set("[data-hero]", { opacity: 1, y: 0, scale: 1, filter: "none" });
+        gsap.set("[data-hero]", { y: 0, scale: 1, filter: "none" });
         gsap.set("[data-hero-line]", { scaleX: 1 });
+        gsap.set("[data-hero-photo]", { scale: 1 });
+        if (wordRef.current) wordRef.current.textContent = WORDS[0];
         return;
       }
 
@@ -37,77 +48,55 @@ export function Hero() {
       let split: SplitText | null = null;
       if (brand) {
         split = SplitText.create(brand, {
-          type: "lines,chars",
+          type: "lines,words",
           mask: "lines",
           linesClass: "hero-line",
-          charsClass: "hero-char",
+          wordsClass: "hero-word",
         });
       }
 
-      const tl = gsap.timeline({ defaults: { ease: "lc.luxury" } });
+      const tl = gsap.timeline({ paused: true, defaults: { ease: "lc.luxury" } });
 
       tl.from("[data-hero-photo]", {
-        scale: 1.08,
-        opacity: 0,
+        scale: 1.16,
         duration: 1.7,
-      })
-        .from(
-          "[data-hero-veil]",
-          { opacity: 0, duration: 1.1 },
-          "-=1.25",
-        );
+      });
 
-      if (split?.chars?.length) {
+      if (split?.words?.length) {
         tl.from(
-          split.chars,
+          split.words,
           {
             yPercent: 110,
-            opacity: 0,
             duration: 1.05,
-            stagger: 0.022,
+            stagger: 0.05,
             ease: "lc.luxury",
           },
-          "-=0.9",
+          "-=1.1",
         );
       } else {
-        tl.from(
-          "[data-hero='brand']",
-          { y: 40, opacity: 0, duration: 1.15 },
-          "-=0.85",
-        );
+        tl.from("[data-hero='brand']", { y: 40, duration: 1.15 }, "-=0.85");
       }
 
-      tl.from(
-        "[data-hero='tag']",
-        { y: 22, opacity: 0, duration: 0.85, ease: "lc.soft" },
-        "-=0.55",
-      )
+      tl.from("[data-hero='tag']", { y: 22, duration: 0.85, ease: "lc.soft" }, "-=0.55")
         .from(
           "[data-hero-line]",
-          { scaleX: 0, opacity: 0, duration: 0.95, ease: "lc.soft" },
+          { scaleX: 0, duration: 0.95, ease: "lc.soft" },
           "-=0.45",
         )
-        .from(
-          "[data-hero='word']",
-          { y: 10, opacity: 0, duration: 0.55, ease: "lc.soft" },
-          "-=0.25",
-        )
-        .from(
-          "[data-hero='cta']",
-          { y: 16, opacity: 0, duration: 0.65, stagger: 0.1, ease: "lc.soft" },
-          "-=0.25",
-        );
+        .from("[data-hero='word']", { y: 10, duration: 0.55, ease: "lc.soft" }, "-=0.25")
+        .from("[data-hero='cta']", { y: 16, duration: 0.65, ease: "lc.soft" }, "-=0.25");
 
       const word = wordRef.current;
       if (word) {
+        word.textContent = WORDS[0];
         const cycle = gsap.timeline({ delay: 2.6 });
         [1, 2, 0].forEach((i) => {
           cycle
-            .to(word, { opacity: 0, y: -8, duration: 0.35, ease: "power2.in" })
+            .to(word, { y: -10, duration: 0.35, ease: "power2.in" })
             .add(() => {
               word.textContent = WORDS[i];
             })
-            .to(word, { opacity: 1, y: 0, duration: 0.4, ease: "lc.soft" })
+            .fromTo(word, { y: 10 }, { y: 0, duration: 0.4, ease: "lc.soft" })
             .to({}, { duration: 0.9 });
         });
       }
@@ -131,43 +120,56 @@ export function Hero() {
           scrub: true,
         },
       });
-      gsap.to("[data-hero-copy]", {
-        yPercent: -4,
-        ease: "none",
-        scrollTrigger: {
-          trigger: root.current,
-          start: "top top",
-          end: "bottom top",
-          scrub: true,
-        },
-      });
+
+      const play = () => {
+        tl.play();
+      };
+      if (isServed()) play();
+      const off = onServed(play);
 
       return () => {
+        off();
         split?.revert();
       };
     },
-    { scope: root },
+    { scope: root, dependencies: [locale, words] },
   );
+
+  useEffect(() => {
+    const warm = () => {
+      void import("@/components/site/Inquiry");
+    };
+    const ric = typeof window.requestIdleCallback === "function";
+    const idle = ric
+      ? window.requestIdleCallback(warm, { timeout: 2200 })
+      : window.setTimeout(warm, 1800);
+    return () => {
+      if (ric) window.cancelIdleCallback(idle);
+      else window.clearTimeout(idle);
+    };
+  }, []);
 
   return (
     <section
       id="top"
       ref={root}
-      className="grain relative min-h-[100svh] overflow-hidden bg-night"
+      className="relative min-h-[100svh] overflow-hidden bg-night"
     >
       <div className="absolute inset-0 overflow-hidden" data-cursor="media">
         <div
           data-hero-photo
-          data-velocity
           className="absolute inset-x-0 -top-[6%] h-[112%] w-full will-change-transform"
         >
           <AmbientVideo
             src="/video/ambient-table.mp4"
             videoOnly
+            lazy={false}
+            preload="metadata"
             position="58% 42%"
           />
         </div>
       </div>
+      <HeroGrain />
 
       <div
         data-hero-veil
@@ -188,70 +190,58 @@ export function Hero() {
         data-hero-copy
         className="relative z-10 flex min-h-[100svh] max-w-[1500px] flex-col justify-end px-6 pb-24 pt-36 will-change-transform md:px-12 md:pb-16 lg:px-20"
       >
-        <p data-hero="tag" className="label mb-5 text-brass">
-          Catering &amp; Events · Berlin
+        <p data-hero="tag" className="label mb-5 text-ivory/55">
+          {t.hero.eyebrow}
         </p>
         <h1
           ref={brandRef}
           data-hero="brand"
           data-cursor="text"
-          className="max-w-[12ch] font-display font-medium leading-[0.78] tracking-[-0.06em] text-ivory drop-shadow-[0_18px_40px_rgba(0,0,0,.35)]"
-          style={{ fontSize: "clamp(3.4rem, 9.5vw, 8.5rem)" }}
+          className="max-w-[14ch] font-display font-medium leading-[0.88] tracking-[-0.05em] text-ivory drop-shadow-[0_18px_40px_rgba(0,0,0,.35)]"
+          style={{ fontSize: "clamp(2.8rem, 7.2vw, 6.2rem)" }}
         >
-          <span className="block">Wagner</span>
-          <span className="block italic">Kulinarik</span>
+          {t.hero.headline}
         </h1>
 
         <p
           data-hero="tag"
-          className="mt-8 max-w-[34ch] font-body text-lg leading-relaxed text-ivory/80 md:ml-[18vw] md:text-xl"
+          className="mt-8 max-w-[40ch] font-body text-lg leading-relaxed text-ivory/80 md:ml-[12vw] md:text-xl"
         >
-          Momente, die man schmecken kann.
+          {t.hero.support}
         </p>
 
-        <div className="mt-8 flex items-center gap-4 md:ml-[18vw]">
+        <div className="mt-8 flex items-center gap-4 md:ml-[12vw]">
           <span
             data-hero-line
             className="label origin-left border-b border-brass pb-2 text-brass"
-            style={{ minWidth: "7ch" }}
+            style={{ minWidth: "8ch" }}
           >
             <span data-hero="word" ref={wordRef}>
-              MOMENT
+              {words[0]}
             </span>
           </span>
         </div>
 
-        <div className="mt-10 flex flex-col items-start gap-5 sm:flex-row sm:items-center md:ml-[18vw]">
+        <div className="mt-10 flex flex-col items-start gap-5 sm:flex-row sm:flex-wrap sm:items-baseline md:ml-[12vw]">
           <Magnetic strength={22}>
             <a
               data-hero="cta"
               data-cursor="cta"
               href="#anfrage"
               onClick={(e) => go(e, "#anfrage")}
-              className="inline-block bg-accent px-7 py-3.5 font-sans text-sm font-medium text-paper transition-[background-color] duration-300 hover:bg-[#ca5138]"
+              onPointerEnter={() => {
+                void import("@/components/site/Inquiry");
+              }}
+              className="inline-block bg-accent px-7 py-3.5 font-sans text-sm font-medium text-paper transition-[background-color] duration-300 hover:bg-berry-bright"
             >
-              Verfügbarkeit prüfen
-            </a>
-          </Magnetic>
-          <Magnetic strength={14}>
-            <a
-              data-hero="cta"
-              data-cursor="link"
-              href="#moment"
-              onClick={(e) => go(e, "#moment")}
-              className="group inline-flex items-center gap-2 px-4 py-3.5 font-sans text-sm font-medium text-ivory/90"
-            >
-              Den Moment sehen
-              <span className="transition-transform duration-300 group-hover:translate-y-0.5">
-                ↓
-              </span>
+              {t.hero.ctaPlan}
             </a>
           </Magnetic>
         </div>
       </div>
 
       <p className="label absolute bottom-7 right-6 z-10 hidden origin-bottom-right -rotate-90 text-ivory/45 md:block">
-        Hochzeiten · Events · Feiern — 2026
+        {t.hero.side}
       </p>
     </section>
   );

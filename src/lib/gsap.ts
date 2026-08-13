@@ -1,38 +1,22 @@
 "use client";
 
+/**
+ * Lean GSAP core — shared by nav, reveals, scroll, cursor.
+ * Heavy plugins (Flip, Draggable, DrawSVG, SplitText) load in the
+ * components that need them so the first client chunk stays smaller.
+ */
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ScrollToPlugin } from "gsap/ScrollToPlugin";
-import { ScrollSmoother } from "gsap/ScrollSmoother";
-import { SplitText } from "gsap/SplitText";
 import { CustomEase } from "gsap/CustomEase";
-import { Flip } from "gsap/Flip";
-import { DrawSVGPlugin } from "gsap/DrawSVGPlugin";
-import { Draggable } from "gsap/Draggable";
-import { InertiaPlugin } from "gsap/InertiaPlugin";
-import { MorphSVGPlugin } from "gsap/MorphSVGPlugin";
 import { useGSAP } from "@gsap/react";
+import { getLenis } from "@/lib/lenis-ref";
 
 let registered = false;
 
-/** Kill switch — off while Moment Film + Ablauf pins; re-enable if desired. */
-export const USE_SCROLL_SMOOTHER = false;
-
 function registerGsap() {
   if (registered || typeof window === "undefined") return;
-  gsap.registerPlugin(
-    ScrollTrigger,
-    ScrollToPlugin,
-    ScrollSmoother,
-    SplitText,
-    CustomEase,
-    Flip,
-    DrawSVGPlugin,
-    Draggable,
-    InertiaPlugin,
-    MorphSVGPlugin,
-    useGSAP,
-  );
+  gsap.registerPlugin(ScrollTrigger, ScrollToPlugin, CustomEase, useGSAP);
 
   CustomEase.create("lc.luxury", "M0,0 C0.16,1 0.3,1 1,1");
   CustomEase.create("lc.soft", "M0,0 C0.22,0.61 0.36,1 1,1");
@@ -58,44 +42,38 @@ export function prefersReducedMotion() {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-/** Desktop-only smoother — never on touch / coarse pointer / reduced motion. */
-export function canUseScrollSmoother() {
-  if (typeof window === "undefined" || !USE_SCROLL_SMOOTHER) return false;
-  if (prefersReducedMotion()) return false;
-  return (
-    window.matchMedia("(pointer: fine)").matches &&
-    window.matchMedia("(min-width: 1024px)").matches &&
-    !window.matchMedia("(hover: none)").matches
-  );
-}
-
 const SCROLL_TO_DURATION = 1.15;
 const SCROLL_TO_EASE = "lc.soft";
 
-/** Smooth scroll to a section id / element. Uses ScrollSmoother when active. */
+/** Smooth scroll to a section id / element. */
 export function scrollToTarget(
   target: string | Element,
   vars?: gsap.TweenVars,
 ) {
   if (typeof window === "undefined") return;
 
+  const el =
+    typeof target === "string"
+      ? document.querySelector(target)
+      : target;
+  if (!(el instanceof HTMLElement)) return;
+
   if (prefersReducedMotion()) {
-    const el =
-      typeof target === "string" ? document.querySelector(target) : target;
-    el?.scrollIntoView({ behavior: "auto", block: "start" });
+    el.scrollIntoView({ behavior: "auto", block: "start" });
     return;
   }
 
-  const smoother = ScrollSmoother.get();
-  if (smoother) {
-    smoother.scrollTo(target, true, "top top");
+  const lenis = getLenis();
+  lenis?.start();
+  if (lenis) {
+    lenis.scrollTo(el, { offset: 0, duration: SCROLL_TO_DURATION });
     return;
   }
 
   gsap.to(window, {
     duration: SCROLL_TO_DURATION,
     ease: SCROLL_TO_EASE,
-    scrollTo: { y: target, autoKill: false, offsetY: 0 },
+    scrollTo: { y: el, autoKill: false, offsetY: 0 },
     overwrite: "auto",
     ...vars,
   });
@@ -105,14 +83,7 @@ export {
   gsap,
   ScrollTrigger,
   ScrollToPlugin,
-  ScrollSmoother,
-  SplitText,
   CustomEase,
-  Flip,
-  DrawSVGPlugin,
-  Draggable,
-  InertiaPlugin,
-  MorphSVGPlugin,
   useGSAP,
   SCROLL_TO_DURATION,
   SCROLL_TO_EASE,

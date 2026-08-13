@@ -1,19 +1,26 @@
+import dynamic from "next/dynamic";
 import { Nav } from "@/components/site/Nav";
 import { Hero } from "@/components/site/Hero";
 import { Manifesto } from "@/components/site/Manifesto";
-import { MomentFilm } from "@/components/site/MomentFilm";
-import { Pillars } from "@/components/site/Pillars";
-import { Packages } from "@/components/site/Packages";
-import { Flavors } from "@/components/site/Flavors";
+import { Occasions } from "@/components/site/Occasions";
 import { Process } from "@/components/site/Process";
-import { Proof } from "@/components/site/Proof";
-import { Radius } from "@/components/site/Radius";
-import { Inquiry } from "@/components/site/Inquiry";
+import { Services } from "@/components/site/Services";
+import { NightOf } from "@/components/site/NightOf";
+import { AppInvite } from "@/components/site/AppInvite";
 import { Footer } from "@/components/site/Footer";
 import { SiteCursor } from "@/components/site/SiteCursor";
 import { ChapterRail } from "@/components/site/ChapterRail";
+import { Room } from "@/components/site/Room";
 import { SmoothScroll } from "@/components/site/SmoothScroll";
-import { VelocityField } from "@/components/site/VelocityField";
+import { Amuse } from "@/components/site/Amuse";
+
+/** Below-fold form island — own chunk. */
+const Inquiry = dynamic(
+  () =>
+    import("@/components/site/Inquiry").then((m) => ({
+      default: m.Inquiry,
+    })),
+);
 
 export default function Home() {
   return (
@@ -21,22 +28,22 @@ export default function Home() {
       <SiteCursor />
       <ChapterRail />
       <Nav />
-      <VelocityField />
       <SmoothScroll>
-        <main>
-          <Hero />
-          <Manifesto />
-          <MomentFilm />
-          <Pillars />
-          <Packages />
-          <Flavors />
-          <Process />
-          <Proof />
-          <Radius />
-          <Inquiry />
-        </main>
+        <Room>
+          <main>
+            <Hero />
+            <Manifesto />
+            <Occasions />
+            <Process />
+            <Services />
+            <NightOf />
+            <Inquiry />
+            <AppInvite />
+          </main>
+        </Room>
         <Footer />
       </SmoothScroll>
+      <Amuse />
     </>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import { canUsePointerEffects, gsap } from "@/lib/gsap";
 
 type CursorState =
@@ -30,16 +30,27 @@ const LABELS: Partial<Record<CursorState, string>> = {
  * Contextual site cursor — fine pointer only.
  * Drive states with data-cursor on interactive nodes.
  */
+function subscribePointer(onChange: () => void) {
+  const fine = window.matchMedia("(pointer: fine)");
+  const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  fine.addEventListener("change", onChange);
+  motion.addEventListener("change", onChange);
+  return () => {
+    fine.removeEventListener("change", onChange);
+    motion.removeEventListener("change", onChange);
+  };
+}
+
 export function SiteCursor() {
   const root = useRef<HTMLDivElement>(null);
   const ring = useRef<HTMLDivElement>(null);
   const dot = useRef<HTMLDivElement>(null);
   const label = useRef<HTMLSpanElement>(null);
-  const [enabled, setEnabled] = useState(false);
-
-  useEffect(() => {
-    setEnabled(canUsePointerEffects());
-  }, []);
+  const enabled = useSyncExternalStore(
+    subscribePointer,
+    canUsePointerEffects,
+    () => false,
+  );
 
   useEffect(() => {
     if (!enabled) return;
