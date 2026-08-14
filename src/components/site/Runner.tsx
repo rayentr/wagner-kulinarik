@@ -135,12 +135,12 @@ export function Runner({
   return (
     <div
       ref={pin}
-      className={`relative motion-safe:h-dvh motion-safe:overflow-hidden ${className}`}
+      className={`relative overflow-x-clip motion-safe:h-dvh motion-safe:overflow-hidden ${className}`}
     >
       {overlay}
       <div
         ref={track}
-        className="relative z-0 flex w-max items-end gap-3 px-6 pb-10 pt-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden motion-reduce:snap-x motion-reduce:snap-mandatory motion-reduce:overflow-x-auto motion-reduce:overscroll-x-contain motion-safe:h-full motion-safe:snap-none motion-safe:gap-4 motion-safe:overflow-visible motion-safe:px-0 motion-safe:pb-16 motion-safe:pl-[min(68vw,20rem)] motion-safe:pr-[16vw] motion-safe:pt-24 lg:motion-safe:gap-5 lg:motion-safe:pl-[min(52vw,700px)] lg:motion-safe:pr-[18vw] lg:motion-safe:pt-28"
+        className="relative z-0 flex w-max items-end gap-3 px-6 pb-10 pt-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden motion-reduce:snap-x motion-reduce:snap-mandatory motion-reduce:overflow-x-auto motion-reduce:overscroll-x-contain motion-safe:h-full motion-safe:snap-none motion-safe:gap-4 motion-safe:overflow-hidden motion-safe:px-0 motion-safe:pb-16 motion-safe:pl-[min(68vw,20rem)] motion-safe:pr-[16vw] motion-safe:pt-24 lg:motion-safe:gap-5 lg:motion-safe:pl-[min(52vw,700px)] lg:motion-safe:pr-[18vw] lg:motion-safe:pt-28"
       >
         {children}
       </div>

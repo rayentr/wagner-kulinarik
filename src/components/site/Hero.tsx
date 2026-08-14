@@ -158,24 +158,36 @@ export function Hero() {
       <div className="absolute inset-0 overflow-hidden" data-cursor="media">
         <div
           data-hero-photo
-          className="absolute inset-x-0 -top-[6%] h-[112%] w-full will-change-transform"
+          className="absolute inset-0 h-full w-full will-change-transform md:-top-[6%] md:h-[112%]"
         >
-          <AmbientVideo
-            src="/video/ambient-table.mp4"
-            videoOnly
-            lazy={false}
-            preload="metadata"
-            position="58% 42%"
-          />
+          <div className="absolute inset-0 [@media(pointer:fine)]:hidden">
+            {/* Phone: a still. The mp4 reads as mush on a small screen. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/hero-dessert-table.jpg"
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover"
+              style={{ objectPosition: "58% 42%" }}
+            />
+          </div>
+          <div className="absolute inset-0 hidden [@media(pointer:fine)]:block">
+            <AmbientVideo
+              src="/video/ambient-table.mp4"
+              videoOnly
+              lazy={false}
+              preload="metadata"
+              position="58% 42%"
+            />
+          </div>
         </div>
       </div>
       <HeroGrain />
 
       <div
         data-hero-veil
-        className="absolute inset-0 bg-[linear-gradient(105deg,rgba(16,13,11,.92)_0%,rgba(16,13,11,.68)_34%,rgba(16,13,11,.18)_62%,rgba(16,13,11,.28)_100%)]"
+        className="absolute inset-0 bg-[linear-gradient(105deg,rgba(16,13,11,.55)_0%,rgba(16,13,11,.28)_40%,rgba(16,13,11,.12)_62%,rgba(16,13,11,.2)_100%)] md:bg-[linear-gradient(105deg,rgba(16,13,11,.92)_0%,rgba(16,13,11,.68)_34%,rgba(16,13,11,.18)_62%,rgba(16,13,11,.28)_100%)]"
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-night/75 via-transparent to-night/25" />
+      <div className="absolute inset-0 bg-gradient-to-t from-night/50 via-transparent to-night/15 md:from-night/75 md:to-night/25" />
 
       <div
         data-hero-glow

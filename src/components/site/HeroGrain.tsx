@@ -132,7 +132,7 @@ export function HeroGrain() {
   return (
     <canvas
       ref={canvas}
-      className="pointer-events-none absolute inset-0 z-[3] h-full w-full mix-blend-overlay"
+      className="pointer-events-none absolute inset-0 z-[3] hidden h-full w-full mix-blend-overlay [@media(pointer:fine)]:block"
       aria-hidden
     />
   );

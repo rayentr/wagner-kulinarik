@@ -12,42 +12,42 @@ const PRINTS = [
     alt: "Kerzen, ein langer Tisch",
     note: "Zu spät gekommen.",
     rotate: "-3.2deg",
-    width: "w-[58vw] sm:w-[42vw] lg:w-[22rem]",
+    width: "w-[36vw] sm:w-[28vw] lg:w-[20rem]",
   },
   {
     image: "/images/wedding-desserts.jpg",
     alt: "Der erste Schnitt",
     note: "Der erste Schnitt.",
     rotate: "2.4deg",
-    width: "w-[52vw] sm:w-[38vw] lg:w-[20rem]",
+    width: "w-[32vw] sm:w-[26vw] lg:w-[18rem]",
   },
   {
     image: "/images/celebration-cookies.jpg",
     alt: "Etwas Süßes am Tisch",
     note: "Jemand lacht zu laut.",
     rotate: "-1.6deg",
-    width: "w-[62vw] sm:w-[44vw] lg:w-[24rem]",
+    width: "w-[38vw] sm:w-[30vw] lg:w-[22rem]",
   },
   {
     image: "/images/gallery-table.jpg",
     alt: "Gedeckter Tisch",
     note: "Der Tisch.",
     rotate: "3.1deg",
-    width: "w-[54vw] sm:w-[40vw] lg:w-[21rem]",
+    width: "w-[34vw] sm:w-[27vw] lg:w-[19rem]",
   },
   {
     image: "/images/gallery-dessert.jpg",
     alt: "Nachspeise",
     note: "Danach.",
     rotate: "-2.2deg",
-    width: "w-[50vw] sm:w-[36vw] lg:w-[19rem]",
+    width: "w-[30vw] sm:w-[24vw] lg:w-[17rem]",
   },
   {
     image: "/images/flavor-signature.jpg",
     alt: "Ein Gang im Detail",
     note: "Noch ein Glas.",
     rotate: "1.8deg",
-    width: "w-[56vw] sm:w-[40vw] lg:w-[22rem]",
+    width: "w-[35vw] sm:w-[28vw] lg:w-[20rem]",
   },
 ] as const;
 
@@ -254,68 +254,67 @@ export function NightOf() {
             className="object-cover"
             style={{ objectPosition: "40% 50%" }}
           />
-          <div className="absolute inset-0 bg-night/55" />
-          <div className="absolute inset-0 bg-gradient-to-t from-night/80 via-night/20 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 flex flex-col justify-end px-6 pb-[max(6rem,calc(env(safe-area-inset-bottom)+5rem))] md:px-12 md:pb-28">
-            <p className="label text-ivory/45">Ihr Tisch</p>
-            <h2 className="mt-5 max-w-[12ch] font-display text-5xl font-medium leading-[.92] tracking-[-.045em] md:text-8xl">
+          <div className="absolute inset-0 bg-night/25" />
+          <div className="absolute inset-0 bg-gradient-to-t from-night/60 via-night/10 to-transparent" />
+          <div className="absolute inset-x-0 top-[max(4.75rem,calc(env(safe-area-inset-top)+3.25rem))] z-[1] px-6 md:px-12">
+            <p className="label text-ivory/55">Ihr Tisch</p>
+            <h2 className="mt-4 max-w-[12ch] font-display text-4xl font-medium leading-[.92] tracking-[-.045em] md:mt-5 md:text-8xl">
               Ihr seid geladen.
             </h2>
           </div>
+          <div
+            data-cursor="drag"
+            className="absolute inset-x-0 bottom-0 z-[2] cursor-grab overflow-hidden pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 [scrollbar-width:none] active:cursor-grabbing [&::-webkit-scrollbar]:hidden md:pb-6"
+          >
+            <div
+              ref={track}
+              className="flex w-max items-end gap-4 px-6 will-change-transform md:gap-8 md:px-16"
+            >
+              {PRINTS.map((p) => (
+                <figure
+                  key={p.note}
+                  data-cursor="media"
+                  data-print
+                  onClick={(e) => {
+                    const drag = dragRef.current?.[0] as
+                      | { _moved?: boolean }
+                      | undefined;
+                    if (drag?._moved) return;
+                    if (e.currentTarget.dataset.moved === "1") return;
+                    const lid = e.currentTarget.querySelector<HTMLElement>(
+                      "[data-print-flash]",
+                    );
+                    flash(lid);
+                  }}
+                  className={`relative flex-none touch-none bg-cream p-1.5 pb-7 text-ink shadow-[0_18px_40px_rgba(0,0,0,.35)] md:p-2 md:pb-9 ${p.width}`}
+                  style={{ transform: `rotate(${p.rotate})` }}
+                >
+                  <span className="relative block aspect-[4/5] overflow-hidden bg-night-soft">
+                    <Image
+                      src={p.image}
+                      alt={p.alt}
+                      fill
+                      sizes="(max-width: 1024px) 38vw, 20rem"
+                      className="object-cover"
+                      draggable={false}
+                      style={{ transform: "scale(1.2)" }}
+                    />
+                    <span
+                      data-print-flash
+                      className="pointer-events-none absolute inset-0 bg-ivory"
+                      style={{ clipPath: "inset(0% 0% 100% 0%)" }}
+                      aria-hidden
+                    />
+                  </span>
+                  <figcaption className="mt-2 px-1 font-display text-xs italic leading-snug md:mt-3 md:text-sm">
+                    {p.note}
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          </div>
         </div>
       </Pass>
-
-      <div
-        data-cursor="drag"
-        className="cursor-grab overflow-x-auto overflow-y-hidden pb-6 pt-4 [scrollbar-width:none] active:cursor-grabbing motion-safe:overflow-hidden [&::-webkit-scrollbar]:hidden md:pb-8"
-      >
-        <div
-          ref={track}
-          className="flex w-max items-end gap-5 px-8 will-change-transform md:gap-8 md:px-16"
-        >
-          {PRINTS.map((p) => (
-            <figure
-              key={p.note}
-              data-cursor="media"
-              data-print
-              onClick={(e) => {
-                const drag = dragRef.current?.[0] as
-                  | { _moved?: boolean }
-                  | undefined;
-                if (drag?._moved) return;
-                if (e.currentTarget.dataset.moved === "1") return;
-                const lid = e.currentTarget.querySelector<HTMLElement>(
-                  "[data-print-flash]",
-                );
-                flash(lid);
-              }}
-              className={`relative flex-none touch-none bg-cream p-2 pb-9 text-ink shadow-[0_18px_40px_rgba(0,0,0,.35)] ${p.width}`}
-              style={{ transform: `rotate(${p.rotate})` }}
-            >
-              <span className="relative block aspect-[4/5] overflow-hidden bg-night-soft">
-                <Image
-                  src={p.image}
-                  alt={p.alt}
-                  fill
-                  sizes="(max-width: 1024px) 58vw, 22rem"
-                  className="object-cover"
-                  draggable={false}
-                  style={{ transform: "scale(1.2)" }}
-                />
-                <span
-                  data-print-flash
-                  className="pointer-events-none absolute inset-0 bg-ivory"
-                  style={{ clipPath: "inset(0% 0% 100% 0%)" }}
-                  aria-hidden
-                />
-              </span>
-              <figcaption className="mt-3 px-1 font-display text-sm italic leading-snug">
-                {p.note}
-              </figcaption>
-            </figure>
-          ))}
-        </div>
-      </div>
 
       <div className="flex flex-wrap items-end gap-6 px-6 pb-20 pt-4 md:gap-10 md:px-16 md:pb-28">
         <button

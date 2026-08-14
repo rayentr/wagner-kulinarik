@@ -2,7 +2,7 @@
 
 import { useRef, type ReactNode } from "react";
 import { Observer } from "gsap/Observer";
-import { bindRoomViewport, canPinRoom, gsap, roomHeight, useGSAP } from "@/lib/gsap";
+import { bindRoomViewport, canPinRoom, gsap, isCoarsePointer, roomHeight, useGSAP } from "@/lib/gsap";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(Observer);
@@ -80,39 +80,42 @@ export function Pass({ children, mark = "Die Nacht" }: PassProps) {
           0,
         );
 
-      const observer = Observer.create({
-        target: el,
-        type: "touch,pointer",
-        tolerance: 8,
-        preventDefault: false,
-        onChangeX(self) {
-          const st = tl.scrollTrigger;
-          if (!st || Math.abs(self.deltaX) < Math.abs(self.deltaY) * 1.1) return;
-          const ev = self.event as PointerEvent | TouchEvent | undefined;
-          const clientX =
-            ev && "clientX" in ev
-              ? ev.clientX
-              : ev && "touches" in ev && ev.touches[0]
-                ? ev.touches[0].clientX
-                : el.getBoundingClientRect().left + el.offsetWidth / 2;
-          const mid =
-            el.getBoundingClientRect().left + el.offsetWidth / 2;
-          const fromLeft = clientX < mid;
-          const opening = fromLeft ? self.deltaX < 0 : self.deltaX > 0;
-          if (ev && "cancelable" in ev && ev.cancelable) ev.preventDefault();
-          const delta = Math.abs(self.deltaX) * (opening ? 1.7 : -1.7);
-          st.scroll(st.scroll() + delta);
-        },
-      });
-
       const unbind = bindRoomViewport({
         onFit: fit,
         onRefresh: () => tl.scrollTrigger?.refresh(),
       });
 
+      let observer: Observer | null = null;
+      if (!isCoarsePointer()) {
+        observer = Observer.create({
+          target: el,
+          type: "touch,pointer",
+          tolerance: 8,
+          preventDefault: false,
+          onChangeX(self) {
+            const st = tl.scrollTrigger;
+            if (!st || Math.abs(self.deltaX) < Math.abs(self.deltaY) * 1.1) return;
+            const ev = self.event as PointerEvent | TouchEvent | undefined;
+            const clientX =
+              ev && "clientX" in ev
+                ? ev.clientX
+                : ev && "touches" in ev && ev.touches[0]
+                  ? ev.touches[0].clientX
+                  : el.getBoundingClientRect().left + el.offsetWidth / 2;
+            const mid =
+              el.getBoundingClientRect().left + el.offsetWidth / 2;
+            const fromLeft = clientX < mid;
+            const opening = fromLeft ? self.deltaX < 0 : self.deltaX > 0;
+            if (ev && "cancelable" in ev && ev.cancelable) ev.preventDefault();
+            const delta = Math.abs(self.deltaX) * (opening ? 1.7 : -1.7);
+            st.scroll(st.scroll() + delta);
+          },
+        });
+      }
+
       return () => {
         unbind();
-        observer.kill();
+        observer?.kill();
         tl.scrollTrigger?.kill();
         tl.kill();
       };

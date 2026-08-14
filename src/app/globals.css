@@ -80,6 +80,8 @@
 html {
   scroll-behavior: auto;
   min-height: 100dvh;
+  overflow-x: clip;
+  overscroll-behavior-x: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -94,6 +96,7 @@ body {
   font-family: var(--font-sans);
   font-weight: 400;
   overflow-x: clip;
+  overscroll-behavior-x: none;
 }
 
 /* ScrollSmoother wrappers — will-change ONLY while smoothing is active */
