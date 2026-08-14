@@ -160,25 +160,13 @@ export function Hero() {
           data-hero-photo
           className="absolute inset-0 h-full w-full will-change-transform md:-top-[6%] md:h-[112%]"
         >
-          <div className="absolute inset-0 [@media(pointer:fine)]:hidden">
-            {/* Phone: a still. The mp4 reads as mush on a small screen. */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/images/hero-dessert-table.jpg"
-              alt=""
-              className="absolute inset-0 h-full w-full object-cover"
-              style={{ objectPosition: "58% 42%" }}
-            />
-          </div>
-          <div className="absolute inset-0 hidden [@media(pointer:fine)]:block">
-            <AmbientVideo
-              src="/video/ambient-table.mp4"
-              videoOnly
-              lazy={false}
-              preload="metadata"
-              position="58% 42%"
-            />
-          </div>
+          <AmbientVideo
+            src="/video/ambient-table.mp4"
+            videoOnly
+            lazy={false}
+            preload="metadata"
+            position="58% 42%"
+          />
         </div>
       </div>
       <HeroGrain />

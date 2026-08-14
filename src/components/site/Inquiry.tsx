@@ -728,7 +728,7 @@ export function Inquiry() {
       >
         <AmbientVideo
           src="/video/dessert-detail.mp4"
-          poster="/images/flavor-signature.jpg"
+          poster="/images/inquiry-table.jpg"
           position="center"
           lazy
           preload="none"

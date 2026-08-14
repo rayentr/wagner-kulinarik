@@ -20,25 +20,25 @@ const BEATS = [
     n: "01",
     label: "Planen",
     line: "Der Anlass nimmt Form an.",
-    image: "/images/gallery-table.jpg",
+    image: "/images/process-anlass.jpg",
   },
   {
     n: "02",
     label: "Einladen",
     line: "Gäste per QR dabei.",
-    image: "/images/gallery-dessert.jpg",
+    image: "/images/process-einladen.jpg",
   },
   {
     n: "03",
     label: "Hosten",
     line: "Die Nacht beginnt.",
-    image: "/images/gallery-event.jpg",
+    image: "/images/process-momente.jpg",
   },
   {
     n: "04",
     label: "Teilen",
     line: "Momente bleiben.",
-    image: "/images/celebration-cookies.jpg",
+    image: "/images/occasion-party.jpg",
   },
 ];
 
@@ -221,7 +221,7 @@ export function MomentFilm() {
       <section className="relative min-h-[85dvh] overflow-hidden bg-night">
         <div className="absolute inset-0" data-cursor="media">
           <Image
-            src="/images/wedding-desserts.jpg"
+            src="/images/occasion-wedding.jpg"
             alt=""
             fill
             sizes="100vw"

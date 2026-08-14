@@ -8,42 +8,42 @@ import { Pass } from "./Pass";
 
 const PRINTS = [
   {
-    image: "/images/gallery-event.jpg",
+    image: "/images/print-01.jpg",
     alt: "Kerzen, ein langer Tisch",
     note: "Zu spät gekommen.",
     rotate: "-3.2deg",
     width: "w-[36vw] sm:w-[28vw] lg:w-[20rem]",
   },
   {
-    image: "/images/wedding-desserts.jpg",
+    image: "/images/print-02.jpg",
     alt: "Der erste Schnitt",
     note: "Der erste Schnitt.",
     rotate: "2.4deg",
     width: "w-[32vw] sm:w-[26vw] lg:w-[18rem]",
   },
   {
-    image: "/images/celebration-cookies.jpg",
+    image: "/images/print-03.jpg",
     alt: "Etwas Süßes am Tisch",
     note: "Jemand lacht zu laut.",
     rotate: "-1.6deg",
     width: "w-[38vw] sm:w-[30vw] lg:w-[22rem]",
   },
   {
-    image: "/images/gallery-table.jpg",
+    image: "/images/print-04.jpg",
     alt: "Gedeckter Tisch",
     note: "Der Tisch.",
     rotate: "3.1deg",
     width: "w-[34vw] sm:w-[27vw] lg:w-[19rem]",
   },
   {
-    image: "/images/gallery-dessert.jpg",
+    image: "/images/print-05.jpg",
     alt: "Nachspeise",
     note: "Danach.",
     rotate: "-2.2deg",
     width: "w-[30vw] sm:w-[24vw] lg:w-[17rem]",
   },
   {
-    image: "/images/flavor-signature.jpg",
+    image: "/images/print-06.jpg",
     alt: "Ein Gang im Detail",
     note: "Noch ein Glas.",
     rotate: "1.8deg",
@@ -247,7 +247,7 @@ export function NightOf() {
       <Pass mark="Die Nacht">
         <div className="relative h-full">
           <Image
-            src="/images/gallery-event.jpg"
+            src="/images/night-room.jpg"
             alt=""
             fill
             sizes="100vw"

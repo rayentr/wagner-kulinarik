@@ -17,32 +17,32 @@ import { loadDraggable } from "@/lib/gsap-plugins";
 
 const SHOTS = [
   {
-    image: "/images/gallery-event.jpg",
+    image: "/images/proof-01.jpg",
     alt: "Festlich gedeckter Eventtisch mit Kerzen und Gang-Service",
     place: "Berlin, spät.",
   },
   {
-    image: "/images/gallery-dessert.jpg",
+    image: "/images/proof-02.jpg",
     alt: "Fein angerichtete Speisen auf einer Etagere",
     place: "Potsdam.",
   },
   {
-    image: "/images/celebration-cookies.jpg",
+    image: "/images/proof-03.jpg",
     alt: "Gang-Präsentation für eine private Feier",
     place: "Zu laut.",
   },
   {
-    image: "/images/gallery-table.jpg",
+    image: "/images/proof-04.jpg",
     alt: "Gedeckter Tisch mit Details",
     place: "Der Tisch.",
   },
   {
-    image: "/images/wedding-desserts.jpg",
+    image: "/images/proof-05.jpg",
     alt: "Hochzeitstisch mit Blüten und Speisen",
     place: "Der Schnitt.",
   },
   {
-    image: "/images/flavor-signature.jpg",
+    image: "/images/proof-06.jpg",
     alt: "Signature-Gang im Detail",
     place: "Noch ein Glas.",
   },

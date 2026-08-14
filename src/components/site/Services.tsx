@@ -9,31 +9,31 @@ const DRAWERS = [
   {
     name: "Venue",
     line: "Der Rahmen. Halle, Garten, Dach — wo der Abend steht.",
-    image: "/images/gallery-event.jpg",
+    image: "/images/service-venue.jpg",
     crop: "40% 50%",
   },
   {
     name: "Küche",
     line: "Was auf den Teller kommt. Kein Buffet-Katalog — ein Gang.",
-    image: "/images/hero-dessert-table.jpg",
+    image: "/images/service-kitchen.jpg",
     crop: "50% 40%",
   },
   {
     name: "Live Cooking",
     line: "Der Koch am Tisch. Sichtbar, schmeckbar.",
-    image: "/images/flavor-signature.jpg",
+    image: "/images/service-live.jpg",
     crop: "50% 35%",
   },
   {
     name: "Gläser",
     line: "Was in der Hand bleibt, wenn geredet wird.",
-    image: "/images/gallery-table.jpg",
+    image: "/images/service-drinks.jpg",
     crop: "50% 60%",
   },
   {
     name: "Musik",
     line: "Bis die Nacht laut wird. Oder leise bleibt.",
-    image: "/images/flavor-winter.jpg",
+    image: "/images/service-music.jpg",
     crop: "55% 40%",
   },
 ] as const;
