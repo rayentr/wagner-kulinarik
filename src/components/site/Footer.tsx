@@ -17,7 +17,7 @@ export function Footer() {
 
   return (
     <footer className="border-t border-border bg-paper pb-[env(safe-area-inset-bottom)] text-ink">
-      <div className="mx-auto flex max-w-[1500px] flex-wrap items-end justify-between gap-x-10 gap-y-8 px-6 pb-10 pt-12 md:px-10 md:pt-16">
+      <div className="mx-auto flex max-w-[1500px] flex-col items-start gap-6 px-6 pb-8 pt-12 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-x-10 sm:gap-y-8 md:px-10 md:pt-16">
         <div>
           <a
             href={`mailto:${f.email}`}
@@ -61,21 +61,16 @@ export function Footer() {
         )}
       </div>
 
-      <div className="relative flex min-h-[28vw] flex-col justify-end px-6 pb-6 pt-10 md:min-h-[16vw] md:px-10 md:pb-8 lg:min-h-[12vw]">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-[46%] flex -translate-y-1/2 justify-center px-6 md:px-12"
-        >
-          <Image
-            src="/images/wagner-kulinarik-logo.png"
-            alt=""
-            width={800}
-            height={232}
-            className="h-auto w-[min(88vw,44rem)] max-w-full select-none object-contain"
-            priority={false}
-          />
-        </div>
-        <p className="relative z-10 label text-muted">
+      <div className="border-t border-border/60 px-6 pb-8 pt-8 md:px-10 md:pb-10 md:pt-10">
+        <Image
+          src="/images/wagner-kulinarik-logo.png"
+          alt=""
+          width={800}
+          height={232}
+          className="mx-auto h-auto w-[min(58vw,20rem)] max-w-full select-none object-contain md:w-[min(36vw,26rem)]"
+          priority={false}
+        />
+        <p className="mt-6 text-center label text-muted">
           Wagner Kulinarik © {year}
         </p>
       </div>

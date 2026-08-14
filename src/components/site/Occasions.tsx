@@ -74,7 +74,8 @@ export function Occasions() {
     window.clearTimeout(swapTimer.current);
     swapTimer.current = window.setTimeout(() => {
       setServed(index);
-      if (!isCoarsePointer()) setOpen(true);
+      setOpen(true);
+      setLifted(true);
     }, prefersReducedMotion() ? 0 : 720);
   }, []);
 
@@ -117,7 +118,7 @@ export function Occasions() {
             <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-56 bg-gradient-to-t from-night/80 to-transparent motion-reduce:block motion-safe:hidden" />
 
             {/* The plate — the dish of the room, any width. */}
-            <div className="absolute bottom-[max(5.5rem,calc(env(safe-area-inset-bottom)+4.5rem))] left-4 right-4 top-[calc(env(safe-area-inset-top)+4.75rem)] z-10 hidden motion-safe:block lg:bottom-16 lg:left-6 lg:right-auto lg:top-28 lg:w-[min(48vw,640px)]">
+            <div className="absolute bottom-[max(5.5rem,calc(env(safe-area-inset-bottom)+4.5rem))] left-4 right-4 top-[calc(env(safe-area-inset-top)+4.75rem)] z-10 hidden pointer-events-none motion-safe:block [@media(pointer:fine)]:pointer-events-auto lg:bottom-16 lg:left-6 lg:right-auto lg:top-28 lg:w-[min(48vw,640px)]">
               <div
                 data-cursor="media"
                 className="relative h-full [perspective:48rem]"
@@ -128,7 +129,7 @@ export function Occasions() {
                 >
                 <Cloche
                   open={coarse ? lifted : open}
-                  liftable={!prefersReducedMotion()}
+                  liftable={!coarse && !prefersReducedMotion()}
                   onLifted={onLifted}
                   onEngage={engage}
                   onLook={look}
