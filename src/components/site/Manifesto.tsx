@@ -82,7 +82,7 @@ export function Manifesto() {
   return (
     <section
       ref={root}
-      className="relative overflow-hidden bg-paper px-6 py-14 text-ink md:px-12 md:py-16"
+      className="relative overflow-x-clip bg-paper px-6 py-14 text-ink md:px-12 md:py-16"
     >
       <div className="mx-auto max-w-[1500px]">
         <div className="grid gap-12 border-t border-ink/20 pt-6 md:grid-cols-[.45fr_1.55fr] md:gap-20">
@@ -98,7 +98,7 @@ export function Manifesto() {
             >
               {t.manifesto.headline}
             </h2>
-            <div className="mt-12 grid gap-8 md:ml-[18%] md:grid-cols-[1fr_auto] md:items-end">
+            <div className="mt-12 grid gap-6 md:ml-[18%] md:grid-cols-[1fr_auto] md:items-end md:gap-8">
               <p
                 data-manifesto
                 className="max-w-[45ch] font-sans text-lg leading-relaxed text-ink/68"
@@ -107,7 +107,7 @@ export function Manifesto() {
               </p>
               <p
                 data-manifesto
-                className="label border-l border-ink/20 pl-4 whitespace-pre-line text-ink/45"
+                className="label text-ink/45 md:border-l md:border-ink/20 md:pl-4 md:whitespace-pre-line"
               >
                 {t.manifesto.aside}
               </p>

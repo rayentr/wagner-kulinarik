@@ -50,7 +50,7 @@ export function Occasions() {
   const [active, setActive] = useState(0);
   const [served, setServed] = useState(0);
   const [open, setOpen] = useState(true);
-  const [lifted, setLifted] = useState(false);
+  const [lifted, setLifted] = useState(true);
   const [shareNote, setShareNote] = useState("");
   const copyRef = useRef<HTMLDivElement>(null);
   const plateRef = useRef(0);
@@ -117,7 +117,7 @@ export function Occasions() {
             <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-56 bg-gradient-to-t from-night/80 to-transparent motion-reduce:block motion-safe:hidden" />
 
             {/* The plate — the dish of the room, any width. */}
-            <div className="absolute bottom-[max(5.5rem,calc(env(safe-area-inset-bottom)+4.5rem))] left-4 right-[16vw] top-[calc(env(safe-area-inset-top)+4.75rem)] z-10 hidden motion-safe:block lg:bottom-16 lg:left-6 lg:right-auto lg:top-28 lg:w-[min(48vw,640px)]">
+            <div className="absolute bottom-[max(5.5rem,calc(env(safe-area-inset-bottom)+4.5rem))] left-4 right-4 top-[calc(env(safe-area-inset-top)+4.75rem)] z-10 hidden motion-safe:block lg:bottom-16 lg:left-6 lg:right-auto lg:top-28 lg:w-[min(48vw,640px)]">
               <div
                 data-cursor="media"
                 className="relative h-full [perspective:48rem]"
@@ -152,7 +152,7 @@ export function Occasions() {
               </div>
             </div>
 
-            <div className="pointer-events-none absolute inset-x-0 bottom-[max(1.25rem,env(safe-area-inset-bottom))] z-20 px-6 text-center md:px-12 motion-safe:bottom-[max(1.5rem,calc(env(safe-area-inset-bottom)+0.5rem))] motion-safe:left-4 motion-safe:right-[16vw] motion-safe:px-0 motion-safe:text-left lg:bottom-20 lg:left-10 lg:right-auto lg:w-[min(44vw,600px)]">
+            <div className="pointer-events-none absolute inset-x-0 bottom-[max(1.25rem,env(safe-area-inset-bottom))] z-20 px-6 text-center md:px-12 motion-safe:bottom-[max(1.5rem,calc(env(safe-area-inset-bottom)+0.5rem))] motion-safe:left-4 motion-safe:right-4 motion-safe:px-0 motion-safe:text-left lg:bottom-20 lg:left-10 lg:right-auto lg:w-[min(44vw,600px)]">
               <div className="overflow-hidden">
                 <div ref={copyRef}>
                   <h2 className="mx-auto max-w-[10ch] font-display text-[clamp(2.2rem,8vw,4.8rem)] font-medium leading-[.9] tracking-[-.04em] text-ivory motion-safe:mx-0">

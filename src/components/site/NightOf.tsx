@@ -245,11 +245,23 @@ export function NightOf() {
       className="relative bg-night text-ivory"
     >
       <Pass mark="Die Nacht">
-        <div className="flex h-full flex-col justify-end px-6 pb-[max(6rem,calc(env(safe-area-inset-bottom)+5rem))] md:px-12 md:pb-28">
-          <p className="label text-ivory/45">Ihr Tisch</p>
-          <h2 className="mt-5 max-w-[12ch] font-display text-5xl font-medium leading-[.92] tracking-[-.045em] md:text-8xl">
-            Ihr seid geladen.
-          </h2>
+        <div className="relative h-full">
+          <Image
+            src="/images/gallery-event.jpg"
+            alt=""
+            fill
+            sizes="100vw"
+            className="object-cover"
+            style={{ objectPosition: "40% 50%" }}
+          />
+          <div className="absolute inset-0 bg-night/55" />
+          <div className="absolute inset-0 bg-gradient-to-t from-night/80 via-night/20 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 flex flex-col justify-end px-6 pb-[max(6rem,calc(env(safe-area-inset-bottom)+5rem))] md:px-12 md:pb-28">
+            <p className="label text-ivory/45">Ihr Tisch</p>
+            <h2 className="mt-5 max-w-[12ch] font-display text-5xl font-medium leading-[.92] tracking-[-.045em] md:text-8xl">
+              Ihr seid geladen.
+            </h2>
+          </div>
         </div>
       </Pass>
 
