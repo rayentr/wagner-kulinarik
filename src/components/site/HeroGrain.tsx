@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { prefersReducedMotion } from "@/lib/gsap";
+import { useEffect, useRef, useSyncExternalStore } from "react";
+import { canUseGrain } from "@/lib/gsap";
 
 const VERT = `
 attribute vec2 aPos;
@@ -37,15 +37,28 @@ function compile(gl: WebGLRenderingContext, type: number, src: string) {
   return sh;
 }
 
+function subscribeGrain(onChange: () => void) {
+  const coarse = window.matchMedia("(pointer: coarse)");
+  const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  coarse.addEventListener("change", onChange);
+  motion.addEventListener("change", onChange);
+  return () => {
+    coarse.removeEventListener("change", onChange);
+    motion.removeEventListener("change", onChange);
+  };
+}
+
 /**
  * One shader plane — grain + a slow displace. Hero only. No wobble elsewhere.
+ * Off on coarse pointers and thin CPUs — the phone is already warm.
  */
 export function HeroGrain() {
   const canvas = useRef<HTMLCanvasElement>(null);
+  const allowed = useSyncExternalStore(subscribeGrain, canUseGrain, () => false);
 
   useEffect(() => {
     const el = canvas.current;
-    if (!el || prefersReducedMotion()) return;
+    if (!el || !allowed) return;
 
     const gl = el.getContext("webgl", {
       alpha: true,
@@ -112,7 +125,9 @@ export function HeroGrain() {
       gl.deleteShader(fs);
       gl.deleteBuffer(buf);
     };
-  }, []);
+  }, [allowed]);
+
+  if (!allowed) return null;
 
   return (
     <canvas

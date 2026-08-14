@@ -1,12 +1,46 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { useT } from "@/lib/locale";
+import { isAppleTouch, isStandalone } from "@/lib/share";
+
+type BeforeInstall = Event & { prompt: () => Promise<void> };
 
 /**
- * An object on the way out — device + invite note. Stores honest. No QR theater.
+ * An object on the way out — device + invite note.
+ * Home Screen now. Stores honest. No QR theater.
  */
 export function AppInvite() {
   const t = useT();
+  const deferred = useRef<BeforeInstall | null>(null);
+  const [mode, setMode] = useState<"done" | "prompt" | "ios" | "hint">("hint");
+
+  useEffect(() => {
+    if (isStandalone()) {
+      setMode("done");
+      return;
+    }
+
+    const onPrompt = (e: Event) => {
+      e.preventDefault();
+      deferred.current = e as BeforeInstall;
+      setMode("prompt");
+    };
+    window.addEventListener("beforeinstallprompt", onPrompt);
+
+    if (isAppleTouch()) setMode("ios");
+
+    return () => window.removeEventListener("beforeinstallprompt", onPrompt);
+  }, []);
+
+  const install = async () => {
+    const ev = deferred.current;
+    if (!ev) return;
+    await ev.prompt();
+    deferred.current = null;
+    if (isStandalone()) setMode("done");
+    else setMode("hint");
+  };
 
   return (
     <section
@@ -40,6 +74,33 @@ export function AppInvite() {
           <p className="mt-3 font-sans text-sm leading-relaxed text-ink/50">
             {t.app.body}
           </p>
+
+          {mode === "prompt" && (
+            <button
+              type="button"
+              data-cursor="cta"
+              onClick={() => void install()}
+              className="mt-5 inline-flex min-h-11 items-center bg-accent px-5 font-sans text-sm font-medium text-paper"
+            >
+              {t.app.install}
+            </button>
+          )}
+          {mode === "ios" && (
+            <p className="mt-5 font-display text-sm italic text-ink/55">
+              {t.app.installIos}
+            </p>
+          )}
+          {mode === "hint" && (
+            <p className="mt-5 font-display text-sm italic text-ink/45">
+              {t.app.installHint}
+            </p>
+          )}
+          {mode === "done" && (
+            <p className="mt-5 font-display text-sm italic text-ink/55">
+              {t.app.installDone}
+            </p>
+          )}
+
           <p className="mt-5 font-sans text-xs text-ink/35">
             {t.app.storeIos}
             {" · "}

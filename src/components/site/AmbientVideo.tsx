@@ -27,9 +27,24 @@ function prefersReducedMotion() {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
+/** One decoder at a time — the visible clip owns the job. */
+let activeClip: HTMLVideoElement | null = null;
+
+function claimClip(v: HTMLVideoElement) {
+  if (activeClip && activeClip !== v) {
+    activeClip.pause();
+  }
+  activeClip = v;
+}
+
+function releaseClip(v: HTMLVideoElement) {
+  if (activeClip === v) activeClip = null;
+}
+
 /**
  * Muted ambient loop. Use videoOnly on the hero so a still never appears.
- * Below-fold: poster + lazy load with preload="none".
+ * Below-fold: poster image under the video (never the video poster attr).
+ * Only the on-screen clip plays.
  */
 export function AmbientVideo({
   src,
@@ -43,59 +58,66 @@ export function AmbientVideo({
   const rootRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [reduceMotion] = useState(() => prefersReducedMotion());
-  const [inView, setInView] = useState(!lazy);
+  const [attached, setAttached] = useState(!lazy);
+  const [visible, setVisible] = useState(!lazy);
   const [useVideo, setUseVideo] = useState(
     () => videoOnly || !prefersReducedMotion(),
   );
 
   useEffect(() => {
-    if (!lazy || inView) return;
     const el = rootRef.current;
     if (!el) return;
 
     const io = new IntersectionObserver(
       ([entry]) => {
-        if (entry?.isIntersecting) {
-          setInView(true);
-          io.disconnect();
-        }
+        const on = Boolean(entry?.isIntersecting);
+        if (on) setAttached(true);
+        setVisible(on);
       },
-      { rootMargin: "200px 0px", threshold: 0.01 },
+      {
+        rootMargin: lazy && !attached ? "200px 0px" : "0px",
+        threshold: 0.2,
+      },
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [lazy, inView]);
+  }, [lazy, attached]);
 
   useEffect(() => {
-    if (!inView) return;
+    const v = videoRef.current;
+    if (!v) return;
 
-    if (videoOnly) {
-      const v = videoRef.current;
-      if (!v) return;
-      if (reduceMotion) {
-        v.pause();
-        try {
-          v.currentTime = 0;
-        } catch {
-          /* ignore */
-        }
-        return;
-      }
-      v.play().catch(() => {
-        /* keep video element — never fall back to an image */
-      });
+    if (!attached || !visible || !useVideo) {
+      v.pause();
+      releaseClip(v);
       return;
     }
 
-    if (!useVideo) return;
-    const v = videoRef.current;
-    if (!v) return;
-    v.play().catch(() => setUseVideo(false));
-  }, [src, useVideo, videoOnly, inView, reduceMotion]);
+    if (videoOnly && reduceMotion) {
+      v.pause();
+      releaseClip(v);
+      try {
+        v.currentTime = 0;
+      } catch {
+        /* ignore */
+      }
+      return;
+    }
 
-  /* Poster stays under the video so the well never flashes empty/white. */
+    claimClip(v);
+    v.play().catch(() => {
+      if (!videoOnly) setUseVideo(false);
+    });
+
+    return () => {
+      v.pause();
+      releaseClip(v);
+    };
+  }, [src, useVideo, videoOnly, attached, visible, reduceMotion]);
+
+  /* Still sits under the video so the well never flashes empty/white. */
   const showPoster = Boolean(poster) && !videoOnly;
-  const showVideo = inView && (useVideo || videoOnly);
+  const showVideo = attached && (useVideo || videoOnly);
 
   return (
     <div ref={rootRef} className={`absolute inset-0 overflow-hidden ${className}`}>
@@ -113,15 +135,15 @@ export function AmbientVideo({
       {showVideo && (
         <video
           ref={videoRef}
-          className="absolute inset-0 h-full w-full object-cover"
+          className="absolute inset-0 h-full w-full bg-night object-cover"
           style={{ objectPosition: position }}
           src={src}
-          poster={videoOnly ? undefined : poster}
           muted
           loop
           playsInline
           autoPlay={!reduceMotion}
           preload={preload}
+          disablePictureInPicture
           aria-hidden
           onError={videoOnly ? undefined : () => setUseVideo(false)}
         />

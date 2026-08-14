@@ -6,11 +6,14 @@ import { Observer } from "gsap/Observer";
 import {
   gsap,
   ScrollTrigger,
-  prefersReducedMotion,
+  bindRoomViewport,
+  canPinRoom,
+  roomHeight,
   scrollToTarget,
   useGSAP,
 } from "@/lib/gsap";
 import { getLenis } from "@/lib/lenis-ref";
+import { playStationTick } from "@/lib/tick";
 import { Magnetic } from "./Magnetic";
 
 if (typeof window !== "undefined") {
@@ -65,7 +68,7 @@ function ask(e: MouseEvent<HTMLAnchorElement>) {
 }
 
 /**
- * The pass — five stations. Desktop/touch: the page holds until the course is served.
+ * The pass — five stations. The page holds until the course is served.
  * Wipes, never a crossfade. Reduced motion: a stacked menu, not a settings list.
  */
 export function Process() {
@@ -103,7 +106,7 @@ export function Process() {
         mark(index);
       };
 
-      if (prefersReducedMotion()) {
+      if (!canPinRoom()) {
         stations.forEach((el) => {
           gsap.set(el, { clearProps: "clipPath,zIndex" });
         });
@@ -114,9 +117,32 @@ export function Process() {
       let animating = false;
       show(0);
 
+      const viewportH = () => roomHeight();
+
+      const fitPin = () => {
+        pinEl.style.height = `${viewportH()}px`;
+      };
+      fitPin();
+
+      let failsafe = 0;
+
+      const finish = (index: number) => {
+        window.clearTimeout(failsafe);
+        const incoming = stations[index];
+        const outgoing = stations[current];
+        if (outgoing && outgoing !== incoming) {
+          gsap.set(outgoing, { zIndex: 0, clipPath: CLOSED_DOWN });
+        }
+        if (incoming) gsap.set(incoming, { zIndex: 1, clipPath: OPEN });
+        current = index;
+        animating = false;
+        mark(index);
+      };
+
       const go = (index: number, direction: number) => {
         if (animating || index === current || index < 0 || index >= n) return;
         animating = true;
+        playStationTick();
         const incoming = stations[index];
         const outgoing = stations[current];
         const from = direction > 0 ? CLOSED_DOWN : CLOSED_UP;
@@ -127,15 +153,12 @@ export function Process() {
         const copy = incoming.querySelector("[data-station-copy]");
         const media = incoming.querySelector("[data-station-media]");
 
+        window.clearTimeout(failsafe);
+        failsafe = window.setTimeout(() => finish(index), 1400);
+
         const tl = gsap.timeline({
           defaults: { ease: "lc.soft" },
-          onComplete: () => {
-            gsap.set(outgoing, { zIndex: 0, clipPath: CLOSED_DOWN });
-            gsap.set(incoming, { zIndex: 1, clipPath: OPEN });
-            current = index;
-            animating = false;
-            mark(index);
-          },
+          onComplete: () => finish(index),
         });
 
         tl.to(incoming, { clipPath: OPEN, duration: 0.82 }, 0);
@@ -158,11 +181,12 @@ export function Process() {
       };
 
       const observer = Observer.create({
-        target: window,
-        type: "wheel,touch",
+        target: pinEl,
+        type: "wheel,touch,pointer",
         wheelSpeed: -1,
-        tolerance: 40,
+        tolerance: 36,
         preventDefault: true,
+        ignore: "[data-pass-next], a, button",
         onUp: () => {
           if (animating) return;
           if (current >= n - 1) {
@@ -183,36 +207,56 @@ export function Process() {
       observer.disable();
 
       let gated = false;
+      let gateTimer = 0;
+
+      const lockTouch = (on: boolean) => {
+        pinEl.style.touchAction = on ? "none" : "";
+        document.documentElement.style.overscrollBehavior = on ? "none" : "";
+      };
 
       const hold = () => {
         getLenis()?.stop();
+        lockTouch(true);
         observer.enable();
+      };
+
+      const free = () => {
+        window.clearTimeout(failsafe);
+        animating = false;
+        lockTouch(false);
+        observer.disable();
+        getLenis()?.start();
       };
 
       const jump = (y: number) => {
         gated = true;
+        window.clearTimeout(gateTimer);
         const lenis = getLenis();
         if (lenis) lenis.scrollTo(y, { immediate: true });
         else window.scrollTo(0, y);
-        requestAnimationFrame(() => {
+        gateTimer = window.setTimeout(() => {
           gated = false;
-        });
+        }, 280);
       };
 
       const release = (direction: number) => {
-        observer.disable();
-        const lenis = getLenis();
-        lenis?.start();
+        free();
         const pass = ScrollTrigger.getById("process-pass");
         if (!pass) return;
-        jump(direction > 0 ? pass.end + 2 : Math.max(0, pass.start - 2));
+        const gap = Math.max(28, viewportH() * 0.06);
+        jump(
+          direction > 0
+            ? pass.end + gap
+            : Math.max(0, pass.start - gap),
+        );
       };
 
       const st = ScrollTrigger.create({
         trigger: pinEl,
         pin: true,
         start: "top top",
-        end: "+=140%",
+        end: () => `+=${viewportH() * 1.4}`,
+        invalidateOnRefresh: true,
         anticipatePin: 1,
         id: "process-pass",
         onEnter: () => {
@@ -229,18 +273,37 @@ export function Process() {
         },
         onLeave: () => {
           if (gated || !observer.isEnabled) return;
-          observer.disable();
-          getLenis()?.start();
+          free();
         },
         onLeaveBack: () => {
           if (gated || !observer.isEnabled) return;
-          observer.disable();
-          getLenis()?.start();
+          free();
         },
       });
 
+      const nextBtn = pinEl.querySelector<HTMLButtonElement>("[data-pass-next]");
+      const onNext = () => {
+        if (!observer.isEnabled) return;
+        if (animating) finish(current);
+        if (current >= n - 1) release(1);
+        else go(current + 1, 1);
+      };
+      nextBtn?.addEventListener("click", onNext);
+
+      const askLink = pinEl.querySelector<HTMLAnchorElement>('a[href="#anfrage"]');
+      const onAsk = () => {
+        if (observer.isEnabled) free();
+      };
+      askLink?.addEventListener("click", onAsk);
+
+      const unbind = bindRoomViewport({
+        onFit: fitPin,
+        onRefresh: () => ScrollTrigger.refresh(),
+        isHeld: () => observer.isEnabled,
+      });
+
       const onKey = (e: KeyboardEvent) => {
-        if (!observer.isEnabled || animating) return;
+        if (!observer.isEnabled) return;
         const tag = (e.target as HTMLElement | null)?.tagName;
         if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
         if (e.key === "Escape") {
@@ -248,6 +311,7 @@ export function Process() {
           release(1);
           return;
         }
+        if (animating) return;
         if (e.key === "ArrowDown" || e.key === "PageDown") {
           e.preventDefault();
           if (current >= n - 1) release(1);
@@ -261,11 +325,22 @@ export function Process() {
       };
       window.addEventListener("keydown", onKey);
 
+      const onHide = () => {
+        if (document.hidden && observer.isEnabled) free();
+      };
+      document.addEventListener("visibilitychange", onHide);
+
       return () => {
         window.removeEventListener("keydown", onKey);
+        document.removeEventListener("visibilitychange", onHide);
+        nextBtn?.removeEventListener("click", onNext);
+        askLink?.removeEventListener("click", onAsk);
+        unbind();
+        window.clearTimeout(failsafe);
+        window.clearTimeout(gateTimer);
+        free();
         observer.kill();
         st.kill();
-        getLenis()?.start();
       };
     },
     { scope: root },
@@ -277,7 +352,7 @@ export function Process() {
       <div
         ref={pin}
         data-cursor="media"
-        className="relative motion-safe:h-[100svh] motion-safe:overflow-hidden"
+        className="relative motion-safe:h-dvh motion-safe:overflow-hidden"
         role="region"
         aria-roledescription="Karussell"
       >
@@ -291,7 +366,7 @@ export function Process() {
           >
             <div
               data-station-media
-              className="relative aspect-[4/5] overflow-hidden bg-night-soft motion-reduce:max-h-[52svh] motion-safe:absolute motion-safe:inset-0 motion-safe:aspect-auto motion-safe:max-h-none"
+              className="relative aspect-[4/5] overflow-hidden bg-night-soft motion-reduce:max-h-[52dvh] motion-safe:absolute motion-safe:inset-0 motion-safe:aspect-auto motion-safe:max-h-none"
             >
               <Image
                 src={s.image}
@@ -308,7 +383,7 @@ export function Process() {
             </div>
             <div className="pointer-events-none absolute inset-x-0 bottom-0 hidden h-64 bg-gradient-to-t from-night/80 to-transparent motion-safe:block" />
 
-            <div className="relative z-10 px-6 py-8 md:px-12 motion-safe:absolute motion-safe:inset-x-0 motion-safe:bottom-0 motion-safe:px-6 motion-safe:pb-16 motion-safe:pt-0 md:motion-safe:px-16">
+            <div className="relative z-10 px-6 py-8 md:px-12 motion-safe:absolute motion-safe:inset-x-0 motion-safe:bottom-0 motion-safe:px-6 motion-safe:pb-[max(5.5rem,calc(env(safe-area-inset-bottom)+4.5rem))] motion-safe:pt-0 md:motion-safe:px-16">
               <p className="label mb-6 text-ink/40 motion-safe:text-ivory/45">
                 Der Weg
               </p>
@@ -340,6 +415,16 @@ export function Process() {
             </div>
           </article>
         ))}
+
+        <button
+          type="button"
+          data-pass-next
+          data-cursor="link"
+          aria-label="Nächste Station"
+          className="pointer-events-auto absolute bottom-[max(1rem,env(safe-area-inset-bottom))] right-6 z-30 hidden min-h-11 font-sans text-sm text-ivory/80 motion-safe:block md:right-10"
+        >
+          Weiter
+        </button>
 
         <ol
           className="pointer-events-none absolute right-6 top-1/2 z-20 hidden -translate-y-1/2 flex-col items-center gap-3 motion-safe:flex md:right-10"

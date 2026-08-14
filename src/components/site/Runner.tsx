@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useRef, type ReactNode } from "react";
-import { gsap, prefersReducedMotion, useGSAP } from "@/lib/gsap";
+import { Observer } from "gsap/Observer";
+import { bindRoomViewport, canPinRoom, gsap, roomHeight, ScrollTrigger, useGSAP } from "@/lib/gsap";
+
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(Observer);
+}
 
 type RunnerProps = {
   children: ReactNode;
@@ -10,15 +15,6 @@ type RunnerProps = {
   className?: string;
   onActiveChange?: (index: number) => void;
 };
-
-function isPinnedAxis() {
-  if (typeof window === "undefined") return false;
-  return (
-    !prefersReducedMotion() &&
-    window.matchMedia("(pointer: fine)").matches &&
-    window.matchMedia("(min-width: 1024px)").matches
-  );
-}
 
 function plateCount(track: HTMLElement) {
   return track.querySelectorAll("[data-plate]").length;
@@ -30,8 +26,8 @@ function indexFromProgress(progress: number, n: number) {
 }
 
 /**
- * Table runner — wheel maps to X on desktop; swipe on touch / reduced motion.
- * Active night is progress along the runner, not bounding-box (widths may differ).
+ * Table runner — vertical scroll maps to X; a finger may also pan the cloth.
+ * Reduced motion: swipe the dishes, no pin.
  */
 export function Runner({
   children,
@@ -61,20 +57,26 @@ export function Runner({
         onActiveRef.current?.(next);
       };
 
-      const onScroll = () => {
-        const max = trackEl.scrollWidth - trackEl.clientWidth;
-        emit(max <= 0 ? 0 : trackEl.scrollLeft / max);
-      };
-
-      trackEl.addEventListener("scroll", onScroll, { passive: true });
-      emit(0);
-
-      if (!isPinnedAxis()) {
+      if (!canPinRoom()) {
+        const onScroll = () => {
+          const max = trackEl.scrollWidth - trackEl.clientWidth;
+          emit(max <= 0 ? 0 : trackEl.scrollLeft / max);
+        };
+        trackEl.addEventListener("scroll", onScroll, { passive: true });
+        emit(0);
         return () => trackEl.removeEventListener("scroll", onScroll);
       }
 
+      const viewportH = () => roomHeight();
+      const fit = () => {
+        pinEl.style.height = `${viewportH()}px`;
+      };
+      fit();
+
       const distance = () =>
         Math.max(0, trackEl.scrollWidth - window.innerWidth);
+
+      emit(0);
 
       const tween = gsap.to(trackEl, {
         x: () => -distance(),
@@ -85,7 +87,7 @@ export function Runner({
           scrub: 0.45,
           start: "top top",
           end: () =>
-            `+=${Math.max(distance() * 1.15, window.innerHeight * 2.4)}`,
+            `+=${Math.max(distance() * 1.15, viewportH() * 2.4)}`,
           invalidateOnRefresh: true,
           anticipatePin: 1,
           id: "table-runner",
@@ -98,8 +100,30 @@ export function Runner({
         },
       });
 
+      const observer = Observer.create({
+        target: pinEl,
+        type: "touch,pointer",
+        tolerance: 12,
+        preventDefault: false,
+        onChangeX(self) {
+          if (Math.abs(self.deltaX) < Math.abs(self.deltaY) * 1.15) return;
+          const st =
+            tween.scrollTrigger ?? ScrollTrigger.getById("table-runner");
+          if (!st) return;
+          const ev = self.event;
+          if (ev && "cancelable" in ev && ev.cancelable) ev.preventDefault();
+          st.scroll(st.scroll() - self.deltaX * 1.35);
+        },
+      });
+
+      const unbind = bindRoomViewport({
+        onFit: fit,
+        onRefresh: () => tween.scrollTrigger?.refresh(),
+      });
+
       return () => {
-        trackEl.removeEventListener("scroll", onScroll);
+        unbind();
+        observer.kill();
         tween.scrollTrigger?.kill();
         tween.kill();
         gsap.set(trackEl, { clearProps: "transform" });
@@ -111,12 +135,12 @@ export function Runner({
   return (
     <div
       ref={pin}
-      className={`relative lg:h-[100svh] lg:overflow-hidden ${className}`}
+      className={`relative motion-safe:h-dvh motion-safe:overflow-hidden ${className}`}
     >
       {overlay}
       <div
         ref={track}
-        className="relative z-0 flex w-max snap-x snap-mandatory items-end gap-3 overflow-x-auto overscroll-x-contain px-6 pb-10 pt-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:h-full lg:snap-none lg:gap-5 lg:overflow-visible lg:px-0 lg:pb-16 lg:pl-[min(52vw,700px)] lg:pr-[18vw] lg:pt-28"
+        className="relative z-0 flex w-max items-end gap-3 px-6 pb-10 pt-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden motion-reduce:snap-x motion-reduce:snap-mandatory motion-reduce:overflow-x-auto motion-reduce:overscroll-x-contain motion-safe:h-full motion-safe:snap-none motion-safe:gap-4 motion-safe:overflow-visible motion-safe:px-0 motion-safe:pb-16 motion-safe:pl-[min(68vw,20rem)] motion-safe:pr-[16vw] motion-safe:pt-24 lg:motion-safe:gap-5 lg:motion-safe:pl-[min(52vw,700px)] lg:motion-safe:pr-[18vw] lg:motion-safe:pt-28"
       >
         {children}
       </div>

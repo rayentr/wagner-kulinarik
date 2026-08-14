@@ -79,6 +79,7 @@
 
 html {
   scroll-behavior: auto;
+  min-height: 100dvh;
 }
 
 @media (prefers-reduced-motion: reduce) {

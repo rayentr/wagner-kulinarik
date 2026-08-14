@@ -1,0 +1,37 @@
+import type { MetadataRoute } from "next";
+import { t } from "@/lib/copy";
+
+export default function manifest(): MetadataRoute.Manifest {
+  return {
+    name: "Wagner Kulinarik",
+    short_name: "Kulinarik",
+    description: t.meta.description,
+    start_url: "/",
+    scope: "/",
+    display: "standalone",
+    orientation: "portrait",
+    background_color: "#fcfaf8",
+    theme_color: "#171310",
+    lang: "de",
+    icons: [
+      {
+        src: "/icons/icon-192.png",
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/icons/icon-512.png",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/icons/maskable-512.png",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "maskable",
+      },
+    ],
+  };
+}

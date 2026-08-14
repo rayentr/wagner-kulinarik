@@ -1,29 +1,25 @@
 "use client";
 
 import { useRef, type ReactNode } from "react";
-import { gsap, prefersReducedMotion, useGSAP } from "@/lib/gsap";
+import { isFinePointer, prefersReducedMotion, gsap, useGSAP } from "@/lib/gsap";
 
 type ParallaxMediaProps = {
   children: ReactNode;
   className?: string;
   /** vertical travel as % of element height — keep small (5–8) */
   amount?: number;
-  /** When false, render children without scroll scrub (default: desktop only). */
+  /** When false, render children without scroll scrub. */
   enabled?: boolean;
 };
 
 function canParallax() {
   if (typeof window === "undefined") return false;
   if (prefersReducedMotion()) return false;
-  return (
-    window.matchMedia("(pointer: fine)").matches &&
-    window.matchMedia("(min-width: 1024px)").matches
-  );
+  return isFinePointer();
 }
 
 /**
- * Quiet spatial depth — desktop fine-pointer only.
- * On touch / reduced-motion: static fill, no ScrollTrigger.
+ * Quiet spatial depth — fine pointer. Coarse gets the room, not this extra Z.
  */
 export function ParallaxMedia({
   children,

@@ -121,9 +121,10 @@ export function Nav() {
         <button
           onClick={() => setOpen((v) => !v)}
           data-cursor="link"
-          className={`label lg:hidden ${
+          className={`label inline-flex min-h-11 min-w-11 items-center justify-center lg:hidden ${
             scrolled || !onHome ? "text-ink" : "text-ivory"
           }`}
+          aria-expanded={open}
           aria-label={t.nav.menu}
         >
           {open ? t.nav.close : t.nav.menu}
@@ -131,8 +132,8 @@ export function Nav() {
       </nav>
 
       {open && (
-        <div className="border-t border-border bg-paper px-6 py-6 lg:hidden">
-          <div className="flex flex-col gap-5">
+        <div className="border-t border-border bg-paper px-6 py-3 lg:hidden">
+          <div className="flex flex-col">
             {links.map((l) => (
               <a
                 key={l.href + l.label}
@@ -141,7 +142,7 @@ export function Nav() {
                   handleNavClick(e, l.href);
                   setOpen(false);
                 }}
-                className="font-display text-lg italic text-ink/70"
+                className="flex min-h-11 items-center font-display text-xl italic text-ink/75"
               >
                 {l.label}
               </a>
@@ -152,7 +153,7 @@ export function Nav() {
                 handleNavClick(e, reserveHref);
                 setOpen(false);
               }}
-              className="font-sans text-sm font-medium text-accent"
+              className="flex min-h-11 items-center font-sans text-sm font-medium text-accent"
             >
               {t.nav.reserve} →
             </a>

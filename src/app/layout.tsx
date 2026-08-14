@@ -19,11 +19,18 @@ const instrument = Instrument_Sans({
 
 export const viewport: Viewport = {
   viewportFit: "cover",
+  themeColor: "#171310",
 };
 
 export const metadata: Metadata = {
   title: t.meta.title,
   description: t.meta.description,
+  applicationName: "Wagner Kulinarik",
+  appleWebApp: {
+    capable: true,
+    title: "Kulinarik",
+    statusBarStyle: "black-translucent",
+  },
   openGraph: {
     title: t.meta.title,
     description: t.meta.description,

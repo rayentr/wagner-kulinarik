@@ -153,7 +153,7 @@ export function Hero() {
     <section
       id="top"
       ref={root}
-      className="relative min-h-[100svh] overflow-hidden bg-night"
+      className="relative min-h-dvh overflow-hidden bg-night"
     >
       <div className="absolute inset-0 overflow-hidden" data-cursor="media">
         <div
@@ -188,7 +188,7 @@ export function Hero() {
 
       <div
         data-hero-copy
-        className="relative z-10 flex min-h-[100svh] max-w-[1500px] flex-col justify-end px-6 pb-24 pt-36 will-change-transform md:px-12 md:pb-16 lg:px-20"
+        className="relative z-10 flex min-h-dvh max-w-[1500px] flex-col justify-end px-6 pb-[max(6rem,calc(env(safe-area-inset-bottom)+5rem))] pt-36 will-change-transform md:px-12 md:pb-16 lg:px-20"
       >
         <p data-hero="tag" className="label mb-5 text-ivory/55">
           {t.hero.eyebrow}
@@ -232,7 +232,7 @@ export function Hero() {
               onPointerEnter={() => {
                 void import("@/components/site/Inquiry");
               }}
-              className="inline-block bg-accent px-7 py-3.5 font-sans text-sm font-medium text-paper transition-[background-color] duration-300 hover:bg-berry-bright"
+              className="inline-flex min-h-11 items-center bg-accent px-7 py-3.5 font-sans text-sm font-medium text-paper transition-[background-color] duration-300 hover:bg-berry-bright"
             >
               {t.hero.ctaPlan}
             </a>

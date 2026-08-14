@@ -137,7 +137,7 @@ export function MomentFilm() {
         id="moment"
         ref={stage}
         data-stage
-        className="relative h-[100svh] overflow-hidden bg-night"
+        className="relative h-dvh overflow-hidden bg-night"
       >
         {BEATS.map((b, i) => (
           <div
@@ -218,7 +218,7 @@ export function MomentFilm() {
         </p>
       </section>
 
-      <section className="relative min-h-[85svh] overflow-hidden bg-night">
+      <section className="relative min-h-[85dvh] overflow-hidden bg-night">
         <div className="absolute inset-0" data-cursor="media">
           <Image
             src="/images/wedding-desserts.jpg"
@@ -232,7 +232,7 @@ export function MomentFilm() {
           <div className="absolute inset-0 bg-gradient-to-r from-night/80 via-night/35 to-transparent" />
         </div>
 
-        <div className="relative z-10 flex min-h-[85svh] flex-col justify-end px-6 py-16 md:px-12 md:py-24 lg:px-20">
+        <div className="relative z-10 flex min-h-[85dvh] flex-col justify-end px-6 py-16 md:px-12 md:py-24 lg:px-20">
           <p className="label text-brass">Weiter</p>
           <h3 className="mt-4 max-w-[12ch] font-display text-5xl font-medium leading-[.92] tracking-[-.04em] text-ivory md:text-7xl">
             Welcher Anlass ist Ihrer?

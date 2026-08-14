@@ -105,6 +105,51 @@ function flash(el: HTMLElement | null) {
   );
 }
 
+function dist(a: Touch, b: Touch) {
+  return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+}
+
+function bindPinch(figure: HTMLElement) {
+  const photo = figure.querySelector("img");
+  if (!photo) return () => {};
+
+  let start = 0;
+  let base = 1.2;
+
+  const onStart = (e: TouchEvent) => {
+    if (e.touches.length !== 2) return;
+    start = dist(e.touches[0], e.touches[1]);
+    base = Number(gsap.getProperty(photo, "scale")) || 1.2;
+  };
+
+  const onMove = (e: TouchEvent) => {
+    if (e.touches.length !== 2 || start <= 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const next = gsap.utils.clamp(1, 2.35, base * (dist(e.touches[0], e.touches[1]) / start));
+    gsap.set(photo, { scale: next });
+  };
+
+  const onEnd = (e: TouchEvent) => {
+    if (e.touches.length >= 2) return;
+    start = 0;
+    gsap.to(photo, { scale: 1.2, duration: 0.55, ease: "lc.soft", overwrite: "auto" });
+  };
+
+  figure.addEventListener("touchstart", onStart, { passive: true });
+  figure.addEventListener("touchmove", onMove, { passive: false });
+  figure.addEventListener("touchend", onEnd);
+  figure.addEventListener("touchcancel", onEnd);
+
+  return () => {
+    figure.removeEventListener("touchstart", onStart);
+    figure.removeEventListener("touchmove", onMove);
+    figure.removeEventListener("touchend", onEnd);
+    figure.removeEventListener("touchcancel", onEnd);
+    gsap.set(photo, { clearProps: "transform" });
+  };
+}
+
 /**
  * The night — a room you enter. Polaroids with weight; booth and place card as objects.
  */
@@ -129,9 +174,16 @@ export function NightOf() {
         drag.applyBounds({ minX: maxX, maxX: 0 });
       };
 
+      const prints = gsap.utils.toArray<HTMLElement>("[data-print]", root.current);
+      const pinches: Array<() => void> = [];
+
+      prints.forEach((figure) => {
+        pinches.push(bindPinch(figure));
+      });
+
       void loadDraggable().then((Draggable) => {
         if (dead || !track.current) return;
-        dragRef.current = Draggable.create(el, {
+        const row = Draggable.create(el, {
           type: "x",
           inertia: true,
           edgeResistance: 0.86,
@@ -147,6 +199,29 @@ export function NightOf() {
             (this as any)._moved = true;
           },
         });
+        const cards = Draggable.create(prints, {
+          type: "x,y",
+          inertia: true,
+          bounds: root.current ?? undefined,
+          edgeResistance: 0.72,
+          dragResistance: 0.12,
+          throwResistance: 2200,
+          zIndexBoost: true,
+          allowContextMenu: true,
+          onPress() {
+            const ev = (this as { pointerEvent?: TouchEvent }).pointerEvent;
+            const node = (this as { target?: HTMLElement }).target;
+            if (node) node.dataset.moved = "0";
+            if (ev?.touches && ev.touches.length > 1) {
+              (this as { endDrag?: () => void }).endDrag?.();
+            }
+          },
+          onDrag() {
+            const node = (this as { target?: HTMLElement }).target;
+            if (node) node.dataset.moved = "1";
+          },
+        });
+        dragRef.current = [...row, ...cards];
         syncBounds();
       });
 
@@ -154,6 +229,7 @@ export function NightOf() {
       return () => {
         dead = true;
         window.removeEventListener("resize", syncBounds);
+        pinches.forEach((off) => off());
         dragRef.current?.forEach((d) => d.kill());
         dragRef.current = null;
         gsap.set(el, { clearProps: "transform" });
@@ -169,7 +245,7 @@ export function NightOf() {
       className="relative bg-night text-ivory"
     >
       <Pass mark="Die Nacht">
-        <div className="flex h-full flex-col justify-end px-6 pb-24 md:px-12 md:pb-28">
+        <div className="flex h-full flex-col justify-end px-6 pb-[max(6rem,calc(env(safe-area-inset-bottom)+5rem))] md:px-12 md:pb-28">
           <p className="label text-ivory/45">Ihr Tisch</p>
           <h2 className="mt-5 max-w-[12ch] font-display text-5xl font-medium leading-[.92] tracking-[-.045em] md:text-8xl">
             Ihr seid geladen.
@@ -189,17 +265,19 @@ export function NightOf() {
             <figure
               key={p.note}
               data-cursor="media"
+              data-print
               onClick={(e) => {
                 const drag = dragRef.current?.[0] as
                   | { _moved?: boolean }
                   | undefined;
                 if (drag?._moved) return;
+                if (e.currentTarget.dataset.moved === "1") return;
                 const lid = e.currentTarget.querySelector<HTMLElement>(
                   "[data-print-flash]",
                 );
                 flash(lid);
               }}
-              className={`relative flex-none bg-cream p-2 pb-9 text-ink shadow-[0_18px_40px_rgba(0,0,0,.35)] ${p.width}`}
+              className={`relative flex-none touch-none bg-cream p-2 pb-9 text-ink shadow-[0_18px_40px_rgba(0,0,0,.35)] ${p.width}`}
               style={{ transform: `rotate(${p.rotate})` }}
             >
               <span className="relative block aspect-[4/5] overflow-hidden bg-night-soft">

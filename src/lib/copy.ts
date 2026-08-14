@@ -41,13 +41,20 @@ export const copy = {
     app: {
       label: "Zum Mitnehmen",
       title: "Die Nacht in der Hand",
-      body: "Wenn der Abend vorbei ist, bleibt er in der Tasche. Stores folgen.",
+      body: "Wenn der Abend vorbei ist, bleibt er in der Tasche. Jetzt auf den Bildschirm. Stores folgen.",
       inviteTitle: "Gäste finden den Weg",
       inviteBody:
         "Ein Link, ein Code — und sie sind am Tisch: Ort, Zeit, die Bilder der Nacht.",
       storeIos: "App Store — bald",
       storeAndroid: "Google Play — bald",
       schemeNote: "Einladungen bleiben",
+      install: "Auf den Bildschirm",
+      installIos: "Teilen — dann „Zum Home-Bildschirm“.",
+      installHint: "Im Menü des Browsers: App installieren.",
+      installDone: "Schon in der Hand.",
+      share: "Teilen",
+      shared: "Unterwegs.",
+      copied: "Link gelegt.",
     },
     chapter: {
       start: "Tür",
@@ -108,13 +115,20 @@ export const copy = {
     app: {
       label: "To take with you",
       title: "The night in your hand",
-      body: "When the evening ends, it stays in your pocket. Stores soon.",
+      body: "When the evening ends, it stays in your pocket. Home Screen now. Stores soon.",
       inviteTitle: "Guests find the table",
       inviteBody:
         "A link, a code — and they are there: place, time, the pictures of the night.",
       storeIos: "App Store — soon",
       storeAndroid: "Google Play — soon",
       schemeNote: "Invites remain",
+      install: "Add to Home Screen",
+      installIos: "Share — then “Add to Home Screen”.",
+      installHint: "In the browser menu: Install app.",
+      installDone: "Already in your hand.",
+      share: "Share",
+      shared: "On its way.",
+      copied: "Link copied.",
     },
     chapter: {
       start: "Door",

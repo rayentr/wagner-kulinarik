@@ -28,18 +28,78 @@ function registerGsap() {
 
 registerGsap();
 
-/** Fine pointer + motion allowed — custom cursor / magnetic live here. */
-export function canUsePointerEffects() {
-  if (typeof window === "undefined") return false;
-  return (
-    window.matchMedia("(pointer: fine)").matches &&
-    !window.matchMedia("(prefers-reduced-motion: reduce)").matches
-  );
-}
-
 export function prefersReducedMotion() {
   if (typeof window === "undefined") return false;
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+/** Mouse / trackpad — cursor and magnetic. Not the definition of the room. */
+export function isFinePointer() {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia("(pointer: fine)").matches;
+}
+
+export function isCoarsePointer() {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia("(pointer: coarse)").matches;
+}
+
+/** Fine pointer + motion allowed — custom cursor / magnetic live here. */
+export function canUsePointerEffects() {
+  return isFinePointer() && !prefersReducedMotion();
+}
+
+/** Pins, Observer, doors — the house exists at 390px. Width is not a gate. */
+export function canPinRoom() {
+  if (typeof window === "undefined") return false;
+  return !prefersReducedMotion();
+}
+
+/** Visible room height — iOS chrome included. */
+export function roomHeight() {
+  if (typeof window === "undefined") return 0;
+  return window.visualViewport?.height ?? window.innerHeight;
+}
+
+type RoomViewportOpts = {
+  onFit?: () => void;
+  onRefresh?: () => void;
+  /** Skip refresh while a room is holding the page. */
+  isHeld?: () => boolean;
+};
+
+/**
+ * Fit rooms to the live viewport. Resize only — visualViewport *scroll*
+ * is iOS chrome and will refresh pins until the pass traps.
+ */
+export function bindRoomViewport({ onFit, onRefresh, isHeld }: RoomViewportOpts) {
+  let timer = 0;
+  const onResize = () => {
+    onFit?.();
+    if (isHeld?.()) return;
+    window.clearTimeout(timer);
+    timer = window.setTimeout(() => {
+      if (isHeld?.()) return;
+      onRefresh?.();
+    }, 140);
+  };
+  window.addEventListener("resize", onResize);
+  window.visualViewport?.addEventListener("resize", onResize);
+  onFit?.();
+  return () => {
+    window.clearTimeout(timer);
+    window.removeEventListener("resize", onResize);
+    window.visualViewport?.removeEventListener("resize", onResize);
+  };
+}
+
+/** WebGL grain — desktop only. Coarse and thin CPUs skip the shader. */
+export function canUseGrain() {
+  if (typeof window === "undefined") return false;
+  if (prefersReducedMotion() || isCoarsePointer()) return false;
+  const cores = navigator.hardwareConcurrency;
+  if (typeof cores === "number" && cores < 4) return false;
+  return true;
 }
 
 const SCROLL_TO_DURATION = 1.15;
